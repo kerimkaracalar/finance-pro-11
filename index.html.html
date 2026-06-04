@@ -1914,30 +1914,94 @@ function setText(id, val) {
 // ── HABERLER ─────────────────────────────────────
 async function loadMetalNews() {
   if (!FinnhubAPI.hasKey()) return;
+
+  // Yükleniyor göster
+  renderMetalNews("goldNewsCard",   "Son Altın Haberleri",  null, true);
+  renderMetalNews("silverNewsCard", "Son Gümüş Haberleri",  null, true);
+
   try {
-    const news = await FinnhubAPI.generalNews("general");
-    const goldNews = (news || []).filter(n => n.headline && /gold|altın|xau|precious|metal/i.test(n.headline)).slice(0, 5);
-    const silvNews = (news || []).filter(n => n.headline && /silver|gümüş|xag/i.test(n.headline)).slice(0, 5);
-    renderMetalNews("goldNewsCard", "Son Altın Haberleri", goldNews);
-    renderMetalNews("silverNewsCard", "Son Gümüş Haberleri", silvNews);
-  } catch {
-    document.getElementById("goldNewsCard").innerHTML = `<h2>Son Altın Haberleri</h2><div class="pc-empty">Haberler yüklenemedi.</div>`;
-    document.getElementById("silverNewsCard").innerHTML = `<h2>Son Gümüş Haberleri</h2><div class="pc-empty">Haberler yüklenemedi.</div>`;
+    // Genel haberler + GLD/SLV/WPM şirket haberleri paralel çek
+    const [general, forex, gldNews, slvNews, wpmNews] = await Promise.all([
+      FinnhubAPI.generalNews("general").catch(() => []),
+      FinnhubAPI.generalNews("forex").catch(() => []),
+      FinnhubAPI.companyNews("GLD").catch(() => []),
+      FinnhubAPI.companyNews("SLV").catch(() => []),
+      FinnhubAPI.companyNews("WPM").catch(() => []),  // Wheaton Precious Metals
+    ]);
+
+    const all = [...(general||[]), ...(forex||[])];
+
+    // Altın haberleri: genel filtre + GLD şirket haberleri
+    const goldKeyword = /gold|xau|precious metal|altın|bullion|GLD|GDXJ|GDX|mining|maden/i;
+    const goldFromGeneral = all.filter(n => n.headline && goldKeyword.test(n.headline));
+    const goldAll = dedupeNews([...gldNews, ...goldFromGeneral]);
+    const goldNews2 = goldAll.slice(0, 6);
+
+    // Gümüş haberleri: genel filtre + SLV/WPM şirket haberleri
+    const silvKeyword = /silver|xag|gümüş|SLV|SIVR|wheaton|platinum|palladium|white metal/i;
+    const silvFromGeneral = all.filter(n => n.headline && silvKeyword.test(n.headline));
+    const silvAll = dedupeNews([...slvNews, ...wpmNews, ...silvFromGeneral]);
+    const silvNews2 = silvAll.slice(0, 6);
+
+    renderMetalNews("goldNewsCard",   "Son Altın Haberleri",  goldNews2);
+    renderMetalNews("silverNewsCard", "Son Gümüş Haberleri",  silvNews2);
+
+  } catch(e) {
+    console.warn("loadMetalNews error:", e);
+    renderMetalNews("goldNewsCard",   "Son Altın Haberleri",  []);
+    renderMetalNews("silverNewsCard", "Son Gümüş Haberleri",  []);
   }
 }
 
-function renderMetalNews(cardId, title, items) {
+// Aynı haberi tekrar gösterme (url veya headline bazlı)
+function dedupeNews(arr) {
+  const seen = new Set();
+  return arr.filter(n => {
+    if (!n?.headline) return false;
+    const key = n.url || n.headline;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  }).sort((a, b) => (b.datetime || 0) - (a.datetime || 0)); // en yeni önce
+}
+
+function renderMetalNews(cardId, title, items, loading = false) {
   const card = document.getElementById(cardId);
   if (!card) return;
-  if (!items || !items.length) {
-    card.innerHTML = `<h2>${title}</h2><div class="pc-empty">Bu kategori için haber bulunamadı.</div>`;
+
+  const icon = title.includes("Altın") ? "🥇" : "🥈";
+
+  if (loading) {
+    card.innerHTML = `<h2>${title}</h2><div class="loading"><div class="spinner"></div>Haberler yükleniyor…</div>`;
     return;
   }
-  card.innerHTML = `<h2>${title}</h2>` + items.map(n => `
-    <a class="news-item" href="${n.url}" target="_blank" rel="noopener">
-      ${n.image ? `<img src="${n.image}" alt="" onerror="this.style.display='none'"/>` : `<div style="width:78px;height:58px;border-radius:9px;background:var(--panel-2);flex-shrink:0;display:grid;place-items:center;color:var(--muted)">📰</div>`}
-      <div><div class="news-title">${n.headline}</div><div class="news-meta">${n.source||""} · ${new Date(n.datetime*1000).toLocaleDateString("tr-TR")}</div></div>
-    </a>`).join("");
+  if (!items || !items.length) {
+    card.innerHTML = `<h2>${title}</h2>
+      <div style="text-align:center;padding:28px 0;color:var(--muted)">
+        <div style="font-size:32px;margin-bottom:8px">${icon}</div>
+        <div style="font-size:13px">Bu kategori için güncel haber bulunamadı.</div>
+        <div style="font-size:11px;margin-top:4px;color:var(--dim)">Haberler her 5 dakikada bir yenilenir.</div>
+      </div>`;
+    return;
+  }
+
+  card.innerHTML = `<h2>${title} <span style="font-size:11px;color:var(--dim);font-weight:500;margin-left:6px">${items.length} haber</span></h2>` +
+    items.map(n => {
+      const date = n.datetime ? new Date(n.datetime * 1000).toLocaleDateString("tr-TR", {day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}) : "";
+      const thumb = n.image
+        ? `<img src="${n.image}" alt="" style="width:72px;height:54px;border-radius:8px;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'"/>`
+        : `<div style="width:72px;height:54px;border-radius:8px;background:var(--panel-3);flex-shrink:0;display:grid;place-items:center;font-size:22px">${icon}</div>`;
+      return `<a class="news-item" href="${n.url}" target="_blank" rel="noopener">
+        ${thumb}
+        <div style="flex:1;min-width:0">
+          <div class="news-title">${n.headline}</div>
+          <div class="news-meta" style="margin-top:4px">
+            <span style="background:var(--panel-3);padding:2px 7px;border-radius:4px;font-size:11px">${n.source||"—"}</span>
+            <span style="margin-left:6px;font-size:11px">${date}</span>
+          </div>
+        </div>
+      </a>`;
+    }).join("");
 }
 
 
@@ -2719,6 +2783,8 @@ if (document.readyState === "loading") {
 
 // 30 saniyede bir fiyatları güncelle
 setInterval(fetchMetals, 30000);
+// 5 dakikada bir haberleri yenile
+setInterval(loadMetalNews, 5 * 60 * 1000);
 
 // URL param
 const params = new URLSearchParams(location.search);
