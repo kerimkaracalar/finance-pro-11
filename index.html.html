@@ -467,8 +467,9 @@ footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 3
         <span>Altın & Gümüş · Hisse Analiz Merkezi</span>
       </div>
     </div>
-    <div class="key-box">
+    <div class="key-box" style="gap:6px;flex-wrap:wrap">
       <input id="apiKey" type="password" placeholder="Finnhub API anahtarı" autocomplete="off" />
+      <input id="goldApiKey" type="password" placeholder="GoldAPI anahtarı (opsiyonel)" autocomplete="off" style="width:180px" />
       <button id="saveKey">Kaydet</button>
     </div>
   </header>
@@ -1003,7 +1004,8 @@ footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 3
   </div>
 
   <footer>
-    Veriler: <a href="https://finnhub.io" target="_blank" rel="noopener">Finnhub.io</a> (GLD/SLV ETF bazlı) · Yatırım tavsiyesi değildir.<br>
+    Veriler: <a href="https://finnhub.io" target="_blank" rel="noopener">Finnhub.io</a> · Fiyat kaynağı: <span id="price-source-badge" style="font-weight:700;color:var(--yellow)">⚡ ETF bazlı</span> · Yatırım tavsiyesi değildir.<br>
+    <span style="font-size:11px;color:var(--dim)">Daha doğru fiyat için: <a href="https://www.goldapi.io/register" target="_blank" rel="noopener" style="color:var(--accent)">goldapi.io</a> ücretsiz anahtarınızı sağ üstten ekleyin</span><br>
     <span id="data-source-note" style="font-size:11px;color:var(--dim)">Veriler yükleniyoru2026</span>
   </footer>
 </div>
@@ -1432,11 +1434,17 @@ let prices = { xau: null, xag: null, usdtry: null, eurusd: null };
 let portfolio = JSON.parse(localStorage.getItem("portfolio_v2") || "[]");
 
 // ── API KEY ────────────────────────────────────────
-const keyInput = document.getElementById("apiKey");
-const saveBtn  = document.getElementById("saveKey");
+const keyInput    = document.getElementById("apiKey");
+const goldKeyInput = document.getElementById("goldApiKey");
+const saveBtn      = document.getElementById("saveKey");
 if (FinnhubAPI.hasKey()) { keyInput.value = FinnhubAPI.key; markSaved(); }
+const savedGoldKey = localStorage.getItem("goldapi_key") || "";
+if (savedGoldKey && goldKeyInput) goldKeyInput.value = savedGoldKey;
 function markSaved() { saveBtn.textContent = "✓ Kayıtlı"; saveBtn.classList.add("key-ok"); }
-saveBtn.addEventListener("click", () => { if (FinnhubAPI.setKey(keyInput.value)) { markSaved(); initData(); } });
+saveBtn.addEventListener("click", () => {
+  if (goldKeyInput?.value?.trim()) localStorage.setItem("goldapi_key", goldKeyInput.value.trim());
+  if (FinnhubAPI.setKey(keyInput.value)) { markSaved(); initData(); }
+});
 
 // ── TABS ──────────────────────────────────────────
 document.querySelectorAll(".tab").forEach(t => {
@@ -1506,10 +1514,47 @@ async function loadSymbol(symbol) {
 }
 
 // ── EMTIA VERİLERİ ───────────────────────────────
-// GLD ETF ≈ 0.093750 troy ons altın içerir (1/10 ons yaklaşımı yerine)
-// SLV ETF ≈ 0.9371 troy ons gümüş içerir
-const GLD_RATIO = 10.6667; // GLD fiyatı × bu = yaklaşık XAU/USD ons fiyatı
-const SLV_RATIO = 1.0671;  // SLV fiyatı × bu = yaklaşık XAG/USD ons fiyatı
+// ETF katsayıları (GLD: 1 share = 1/10.89 oz, SLV: 1 share = 1/1.065 oz)
+// Not: GoldAPI.io anahtarı girilirse direkt troy ons fiyatı kullanılır
+const GLD_RATIO = 10.8932; // GLD: 1/0.09175 oz = daha doğru değer
+const SLV_RATIO = 1.0651;  // SLV: 1/0.9389 oz = daha doğru değer
+
+// GoldAPI.io'dan direkt metal fiyatı çek (en doğru yöntem)
+async function fetchFromGoldAPI() {
+  const key = localStorage.getItem("goldapi_key");
+  if (!key) return null;
+  try {
+    const [xauRes, xagRes] = await Promise.all([
+      fetch("https://www.goldapi.io/api/XAU/USD", {
+        headers: { "x-access-token": key, "Content-Type": "application/json" }
+      }).catch(() => null),
+      fetch("https://www.goldapi.io/api/XAG/USD", {
+        headers: { "x-access-token": key, "Content-Type": "application/json" }
+      }).catch(() => null),
+    ]);
+    const xau = xauRes?.ok ? await xauRes.json() : null;
+    const xag = xagRes?.ok ? await xagRes.json() : null;
+    if (!xau?.price) return null;
+    return {
+      xau: {
+        c: xau.price, o: xau.open_price || xau.price,
+        h: xau.high_price || xau.price, l: xau.low_price || xau.price,
+        pc: xau.prev_close_price || xau.price,
+        d: xau.ch || 0, dp: xau.chp || 0
+      },
+      xag: xag?.price ? {
+        c: xag.price, o: xag.open_price || xag.price,
+        h: xag.high_price || xag.price, l: xag.low_price || xag.price,
+        pc: xag.prev_close_price || xag.price,
+        d: xag.ch || 0, dp: xag.chp || 0
+      } : null,
+      source: "goldapi"
+    };
+  } catch(e) {
+    console.warn("GoldAPI error:", e);
+    return null;
+  }
+}
 
 async function fetchPublicFX() {
   // Ücretsiz, CORS destekli FX API - key gerektirmez
@@ -1533,9 +1578,10 @@ async function fetchPublicFX() {
 async function fetchMetals() {
   if (!FinnhubAPI.hasKey()) return;
   try {
-    // GLD = altın ETF, SLV = gümüş ETF, IAU = ikinci altın ETF (yedek)
-    // SPY = S&P500 ETF — hepsi ücretsiz Finnhub'da çalışır
-    const [gld, slv, iau, spy, fxData] = await Promise.all([
+    // 1. Önce GoldAPI'yi dene (en doğru fiyat — direkt troy ons)
+    // 2. Yoksa Finnhub ETF'lerinden hesapla (GLD, SLV, IAU)
+    const [goldApiData, gld, slv, iau, spy, fxData] = await Promise.all([
+      fetchFromGoldAPI().catch(() => null),
       FinnhubAPI.quote("GLD").catch(() => null),
       FinnhubAPI.quote("SLV").catch(() => null),
       FinnhubAPI.quote("IAU").catch(() => null),
@@ -1543,43 +1589,45 @@ async function fetchMetals() {
       fetchPublicFX(),
     ]);
 
-    // GLD başarısızsa IAU'dan hesapla (IAU ≈ 1/100 ons × ~10.6 faktör farklı)
-    // GLD: 1 hisse ≈ 0.09375 troy oz → 1 oz = GLD × (1/0.09375) = GLD × 10.6667
-    // IAU: 1 hisse ≈ 0.01 troy oz → 1 oz = IAU × 100
     let xauPrice = null, xauQuote = null;
-    if (gld?.c && gld.c > 100) {
-      xauPrice = gld.c * GLD_RATIO;
-      xauQuote = {
-        c: xauPrice,
-        o: gld.o * GLD_RATIO,
-        h: gld.h * GLD_RATIO,
-        l: gld.l * GLD_RATIO,
-        pc: gld.pc * GLD_RATIO,
-        d: gld.d * GLD_RATIO,
-        dp: gld.dp,
-      };
-    } else if (iau?.c && iau.c > 10) {
-      xauPrice = iau.c * 100;
-      xauQuote = { c: xauPrice, o: iau.o*100, h: iau.h*100, l: iau.l*100, pc: iau.pc*100, d: iau.d*100, dp: iau.dp };
-    }
-
-    // SLV: 1 hisse ≈ 0.9371 troy oz → 1 oz = SLV / 0.9371 = SLV × 1.0671
     let xagPrice = null, xagQuote = null;
-    if (slv?.c && slv.c > 1) {
-      xagPrice = slv.c * SLV_RATIO;
-      xagQuote = {
-        c: xagPrice,
-        o: slv.o * SLV_RATIO,
-        h: slv.h * SLV_RATIO,
-        l: slv.l * SLV_RATIO,
-        pc: slv.pc * SLV_RATIO,
-        d: slv.d * SLV_RATIO,
-        dp: slv.dp,
-      };
+    let priceSource = "ETF";
+
+    if (goldApiData?.xau) {
+      // ✅ GoldAPI — direkt troy ons fiyatı, en doğru
+      priceSource = "GoldAPI";
+      xauQuote = goldApiData.xau;
+      xauPrice  = goldApiData.xau.c;
+      if (goldApiData.xag) {
+        xagQuote = goldApiData.xag;
+        xagPrice  = goldApiData.xag.c;
+      }
     }
 
-    const utry = fxData.try;
+    // GoldAPI'de XAG yoksa veya GoldAPI yok → ETF'den hesapla
+    if (!xauPrice) {
+      if (gld?.c && gld.c > 100) {
+        xauPrice = gld.c * GLD_RATIO;
+        xauQuote = { c:xauPrice, o:gld.o*GLD_RATIO, h:gld.h*GLD_RATIO, l:gld.l*GLD_RATIO, pc:gld.pc*GLD_RATIO, d:gld.d*GLD_RATIO, dp:gld.dp };
+      } else if (iau?.c && iau.c > 10) {
+        xauPrice = iau.c * 100;
+        xauQuote = { c:xauPrice, o:iau.o*100, h:iau.h*100, l:iau.l*100, pc:iau.pc*100, d:iau.d*100, dp:iau.dp };
+      }
+    }
+    if (!xagPrice && slv?.c && slv.c > 1) {
+      xagPrice = slv.c * SLV_RATIO;
+      xagQuote = { c:xagPrice, o:slv.o*SLV_RATIO, h:slv.h*SLV_RATIO, l:slv.l*SLV_RATIO, pc:slv.pc*SLV_RATIO, d:slv.d*SLV_RATIO, dp:slv.dp };
+    }
+
+    const utry   = fxData.try;
     const eurusd = fxData.eur;
+
+    // Kaynak göstergesi güncelle
+    const srcEl = document.getElementById("price-source-badge");
+    if (srcEl) {
+      srcEl.textContent = priceSource === "GoldAPI" ? "✅ GoldAPI (direkt)" : "⚡ ETF bazlı";
+      srcEl.style.color  = priceSource === "GoldAPI" ? "var(--green)" : "var(--yellow)";
+    }
 
     // State güncelle
     prices.xau = xauPrice;
