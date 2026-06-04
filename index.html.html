@@ -1446,77 +1446,110 @@ async function loadSymbol(symbol) {
 const GLD_RATIO = 10.8932; // GLD: 1/0.09175 oz = daha doğru değer
 const SLV_RATIO = 1.0651;  // SLV: 1/0.9389 oz = daha doğru değer
 
-// GoldAPI.io — sadece 5 dakikada bir çağır (ücretsiz: 100 istek/ay)
-// Aradaki 30sn güncellemelerde ETF fiyatına dinamik katsayı uygulanır
-const goldApiCache = { xau: null, xag: null, lastFetch: 0 };
-const GOLDAPI_INTERVAL = 5 * 60 * 1000; // 5 dakika = ayda ~300 istek → ücretsiz aşılmaz
+// ══════════════════════════════════════════════════════
+// ÜCRETSIZ METAL FİYAT MOTORU — Key yok, limit yok
+// Kaynak önceliği: Bybit → OKX → Gate.io → GLD/SLV ETF
+// PAXG = 1 troy oz altın destekli token, XAU ile %0.1-0.3 sapma
+// ══════════════════════════════════════════════════════
 
-async function fetchFromGoldAPI(forceRefresh = false) {
-  const key = localStorage.getItem("goldapi_key");
-  if (!key) return null;
-
-  const now = Date.now();
-  // Cache geçerliyse direkt dön
-  if (!forceRefresh && goldApiCache.xau && (now - goldApiCache.lastFetch) < GOLDAPI_INTERVAL) {
-    return goldApiCache;
-  }
-
-  try {
-    const [xauRes, xagRes] = await Promise.all([
-      fetch("https://www.goldapi.io/api/XAU/USD", {
-        headers: { "x-access-token": key, "Content-Type": "application/json" }
-      }).catch(() => null),
-      fetch("https://www.goldapi.io/api/XAG/USD", {
-        headers: { "x-access-token": key, "Content-Type": "application/json" }
-      }).catch(() => null),
-    ]);
-    const xau = xauRes?.ok ? await xauRes.json() : null;
-    const xag = xagRes?.ok ? await xagRes.json() : null;
-    if (!xau?.price) return null;
-
-    goldApiCache.xau = {
-      c: xau.price, o: xau.open_price || xau.price,
-      h: xau.high_price || xau.price, l: xau.low_price || xau.price,
-      pc: xau.prev_close_price || xau.price,
-      d: xau.ch || 0, dp: xau.chp || 0
-    };
-    goldApiCache.xag = xag?.price ? {
-      c: xag.price, o: xag.open_price || xag.price,
-      h: xag.high_price || xag.price, l: xag.low_price || xag.price,
-      pc: xag.prev_close_price || xag.price,
-      d: xag.ch || 0, dp: xag.chp || 0
-    } : null;
-    goldApiCache.lastFetch = now;
-    goldApiCache.source = "goldapi";
-
-    // Dinamik katsayı güncelle (GoldAPI fiyatı / ETF türev fiyatı)
-    // Böylece aradaki 30sn güncellemelerde ETF fiyatı düzeltilir
-    const gldQuote = await FinnhubAPI.quote("GLD").catch(() => null);
-    if (gldQuote?.c) {
-      const etfDerived = gldQuote.c * GLD_RATIO;
-      dynamicGLDRatio = xau.price / gldQuote.c; // gerçek katsayı
-    }
-    const slvQuote = await FinnhubAPI.quote("SLV").catch(() => null);
-    if (slvQuote?.c && xag?.price) {
-      dynamicSLVRatio = xag.price / slvQuote.c;
-    }
-
-    // Kalan istek sayısını göster
-    const remaining = xauRes.headers?.get("x-ratelimit-remaining");
-    const srcEl = document.getElementById("price-source-badge");
-    if (srcEl && remaining) srcEl.title = `GoldAPI — ${remaining} istek kaldı`;
-
-    console.log(`GoldAPI güncellendi: XAU=$${xau.price} XAG=$${xag?.price||"—"} | Dinamik katsayı: GLD×${dynamicGLDRatio.toFixed(4)} SLV×${dynamicSLVRatio.toFixed(4)}`);
-    return goldApiCache;
-  } catch(e) {
-    console.warn("GoldAPI error:", e);
-    return goldApiCache.xau ? goldApiCache : null; // cache varsa onu kullan
-  }
-}
-
-// Dinamik katsayılar (GoldAPI ile kalibrasyon sonrası güncellenir)
+// Dinamik katsayılar (PAXG ile kalibre edilir)
 let dynamicGLDRatio = GLD_RATIO;
 let dynamicSLVRatio = SLV_RATIO;
+
+async function fetchFreeMetalPrices() {
+  // 1. Bybit (birincil — en hızlı, CORS açık)
+  try {
+    const [paxgRes, xagRes] = await Promise.all([
+      fetch("https://api.bybit.com/v5/market/tickers?category=spot&symbol=PAXGUSDT"),
+      fetch("https://api.bybit.com/v5/market/tickers?category=spot&symbol=XAGUSDT").catch(() => null),
+    ]);
+    if (paxgRes.ok) {
+      const paxgData = await paxgRes.json();
+      const paxg = paxgData?.result?.list?.[0];
+      if (paxg?.lastPrice) {
+        const xauPrice = parseFloat(paxg.lastPrice);
+        const xauPc    = parseFloat(paxg.prevPrice24h) || xauPrice;
+        const xauHigh  = parseFloat(paxg.highPrice24h) || xauPrice;
+        const xauLow   = parseFloat(paxg.lowPrice24h)  || xauPrice;
+        const xauD     = xauPrice - xauPc;
+        const xauDp    = xauPc ? (xauD / xauPc * 100) : 0;
+
+        let xagResult = null;
+        if (xagRes?.ok) {
+          const xagData = await xagRes.json();
+          const xag = xagData?.result?.list?.[0];
+          if (xag?.lastPrice) {
+            const xagP  = parseFloat(xag.lastPrice);
+            const xagPc = parseFloat(xag.prevPrice24h) || xagP;
+            xagResult = { c:xagP, o:xagPc, h:parseFloat(xag.highPrice24h)||xagP, l:parseFloat(xag.lowPrice24h)||xagP, pc:xagPc, d:xagP-xagPc, dp:xagPc?(xagP-xagPc)/xagPc*100:0 };
+          }
+        }
+        return { xau:{ c:xauPrice, o:xauPc, h:xauHigh, l:xauLow, pc:xauPc, d:xauD, dp:xauDp }, xag:xagResult, source:"Bybit" };
+      }
+    }
+  } catch(e) { console.warn("Bybit failed:", e.message); }
+
+  // 2. OKX (yedek)
+  try {
+    const [paxgRes, xagRes] = await Promise.all([
+      fetch("https://www.okx.com/api/v5/market/ticker?instId=PAXG-USDT"),
+      fetch("https://www.okx.com/api/v5/market/ticker?instId=XAG-USDT").catch(() => null),
+    ]);
+    if (paxgRes.ok) {
+      const d = await paxgRes.json();
+      const t = d?.data?.[0];
+      if (t?.last) {
+        const xauP = parseFloat(t.last), xauPc = parseFloat(t.open24h)||xauP;
+        let xagResult = null;
+        if (xagRes?.ok) {
+          const d2 = await xagRes.json();
+          const t2 = d2?.data?.[0];
+          if (t2?.last) { const p=parseFloat(t2.last),pc=parseFloat(t2.open24h)||p; xagResult={c:p,o:pc,h:parseFloat(t2.high24h)||p,l:parseFloat(t2.low24h)||p,pc,d:p-pc,dp:pc?(p-pc)/pc*100:0}; }
+        }
+        return { xau:{c:xauP,o:xauPc,h:parseFloat(t.high24h)||xauP,l:parseFloat(t.low24h)||xauP,pc:xauPc,d:xauP-xauPc,dp:xauPc?(xauP-xauPc)/xauPc*100:0}, xag:xagResult, source:"OKX" };
+      }
+    }
+  } catch(e) { console.warn("OKX failed:", e.message); }
+
+  // 3. Gate.io (ikinci yedek)
+  try {
+    const res = await fetch("https://api.gateio.ws/api/v4/spot/tickers?currency_pair=PAXG_USDT");
+    if (res.ok) {
+      const d = await res.json();
+      const t = d?.[0];
+      if (t?.last) {
+        const p=parseFloat(t.last), pc=parseFloat(t.change_percentage)?p/(1+parseFloat(t.change_percentage)/100):p;
+        return { xau:{c:p,o:pc,h:parseFloat(t.high_24h)||p,l:parseFloat(t.low_24h)||p,pc,d:p-pc,dp:pc?(p-pc)/pc*100:0}, xag:null, source:"Gate.io" };
+      }
+    }
+  } catch(e) { console.warn("Gate.io failed:", e.message); }
+
+  // 4. GoldAPI (varsa — son çare, günde 100 limit)
+  const goldKey = localStorage.getItem("goldapi_key");
+  if (goldKey) {
+    try {
+      const [xauRes, xagRes] = await Promise.all([
+        fetch("https://www.goldapi.io/api/XAU/USD", { headers:{"x-access-token":goldKey} }).catch(()=>null),
+        fetch("https://www.goldapi.io/api/XAG/USD", { headers:{"x-access-token":goldKey} }).catch(()=>null),
+      ]);
+      const xau = xauRes?.ok ? await xauRes.json() : null;
+      const xag = xagRes?.ok ? await xagRes.json() : null;
+      if (xau?.price) {
+        return {
+          xau:{c:xau.price,o:xau.open_price||xau.price,h:xau.high_price||xau.price,l:xau.low_price||xau.price,pc:xau.prev_close_price||xau.price,d:xau.ch||0,dp:xau.chp||0},
+          xag:xag?.price?{c:xag.price,o:xag.open_price||xag.price,h:xag.high_price||xag.price,l:xag.low_price||xag.price,pc:xag.prev_close_price||xag.price,d:xag.ch||0,dp:xag.chp||0}:null,
+          source:"GoldAPI"
+        };
+      }
+    } catch(e) { console.warn("GoldAPI failed:", e.message); }
+  }
+
+  return null; // Hiçbiri çalışmadı → ETF fallback
+}
+
+// Geriye dönük uyumluluk için alias
+async function fetchFromGoldAPI() { return null; }
+const GOLDAPI_INTERVAL = 5 * 60 * 1000;
 
 async function fetchPublicFX() {
   // Ücretsiz, CORS destekli FX API - key gerektirmez
@@ -1542,8 +1575,8 @@ async function fetchMetals() {
   try {
     // 1. Önce GoldAPI'yi dene (en doğru fiyat — direkt troy ons)
     // 2. Yoksa Finnhub ETF'lerinden hesapla (GLD, SLV, IAU)
-    const [goldApiData, gld, slv, iau, spy, fxData] = await Promise.all([
-      fetchFromGoldAPI().catch(() => null),
+    const [freeData, gld, slv, iau, spy, fxData] = await Promise.all([
+      fetchFreeMetalPrices().catch(() => null),
       FinnhubAPI.quote("GLD").catch(() => null),
       FinnhubAPI.quote("SLV").catch(() => null),
       FinnhubAPI.quote("IAU").catch(() => null),
@@ -1555,15 +1588,18 @@ async function fetchMetals() {
     let xagPrice = null, xagQuote = null;
     let priceSource = "ETF";
 
-    if (goldApiData?.xau) {
-      // ✅ GoldAPI — direkt troy ons fiyatı, en doğru
-      priceSource = "GoldAPI";
-      xauQuote = goldApiData.xau;
-      xauPrice  = goldApiData.xau.c;
-      if (goldApiData.xag) {
-        xagQuote = goldApiData.xag;
-        xagPrice  = goldApiData.xag.c;
+    if (freeData?.xau) {
+      // ✅ Bybit/OKX/Gate.io — PAXG = fiziksel altın tokenı, sınırsız ücretsiz
+      priceSource = freeData.source || "Kripto Borsa";
+      xauQuote = freeData.xau;
+      xauPrice  = freeData.xau.c;
+      if (freeData.xag) {
+        xagQuote = freeData.xag;
+        xagPrice  = freeData.xag.c;
       }
+      // Kalibre et: GLD ETF katsayısını gerçek fiyata göre güncelle
+      if (gld?.c && xauPrice) dynamicGLDRatio = xauPrice / gld.c;
+      if (slv?.c && xagPrice) dynamicSLVRatio = xagPrice / slv.c;
     }
 
     // GoldAPI'de XAG yoksa veya GoldAPI yok → ETF'den hesapla
@@ -1590,8 +1626,9 @@ async function fetchMetals() {
     // Kaynak göstergesi güncelle
     const srcEl = document.getElementById("price-source-badge");
     if (srcEl) {
-      srcEl.textContent = priceSource === "GoldAPI" ? "✅ GoldAPI (direkt)" : "⚡ ETF bazlı";
-      srcEl.style.color  = priceSource === "GoldAPI" ? "var(--green)" : "var(--yellow)";
+      const isExact = ["Bybit","OKX","Gate.io","GoldAPI"].includes(priceSource);
+      srcEl.textContent = isExact ? `✅ ${priceSource} (direkt)` : "⚡ ETF bazlı";
+      srcEl.style.color  = isExact ? "var(--green)" : "var(--yellow)";
     }
 
     // State güncelle
@@ -2589,9 +2626,7 @@ if (document.readyState === "loading") {
 setInterval(fetchMetals, 30000);
 // 5 dakikada bir haberleri yenile
 setInterval(loadMetalNews, 5 * 60 * 1000);
-// GoldAPI kalibrasyonu: sayfa yüklenince + sonra 5dk'da bir otomatik
-// (cache mekanizması sayesinde fazla istek gitmez)
-setInterval(() => fetchFromGoldAPI(), GOLDAPI_INTERVAL);
+// Fiyat kaynağı: Bybit/OKX/Gate.io — sınırsız, 30sn'de bir çalışır
 
 // URL param
 const params = new URLSearchParams(location.search);
