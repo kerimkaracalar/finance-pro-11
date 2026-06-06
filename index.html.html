@@ -2785,33 +2785,7 @@ const params = new URLSearchParams(location.search);
 const initial = params.get("symbol");
 if (initial && FinnhubAPI.hasKey()) {
   document.querySelector('[data-tab="hisse"]').click();
-  loadSymbol(initial)
-     
-     <!-- TradingView Widget BEGIN -->
-<div class="tradingview-widget-container">
-  <div class="tradingview-widget-container__widget"></div>
-  <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/markets/" rel="noopener nofollow" target="_blank"><span class="blue-text">Markets today</span></a><span class="trademark"> by TradingView</span></div>
-  <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-tickers.js" async>
-  {
-  "symbols": [
-    {
-      "proName": "OANDA:XAUUSD",
-      "title": "Gold"
-    },
-    {
-      "proName": "OANDA:XAGUSD",
-      "title": "Silver"
-    }
-  ],
-  "colorTheme": "dark",
-  "locale": "en",
-  "largeChartUrl": "",
-  "isTransparent": false,
-  "showSymbolLogo": true
-}
-  </script>
-</div>
-<!-- TradingView Widget END -->;
+  loadSymbol(initial);
 }
 </script>
 </body>
