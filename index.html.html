@@ -1719,33 +1719,11 @@ async function fetchPublicFX() {
 async function fetchMetals() {
   if (!FinnhubAPI.hasKey() && !getMSKey()) return; // En az bir key gerekli
   try {
-    // ── Fiyat öncelik sırası: Metal Sentinel → Bybit/OKX → Kraken → ETF ──
-    let xauPrice = null, xauQuote = null;
-    let xagPrice = null, xagQuote = null;
-    let priceSource = "ETF";
-
-    // 1. Metal Sentinel (cache: 15dk — birincil kaynak)
-    const msData = await fetchMetalSentinel().catch(() => null);
-    if (msData?.xau) {
-      priceSource = "MetalSentinel";
-      xauQuote = msData.xau; xauPrice = msData.xau.c;
-      if (msData.xag) { xagQuote = msData.xag; xagPrice = msData.xag.c; }
-      if (msData.usdtry) prices.usdtry = msData.usdtry;
-    }
-
-    // 2. Metal Sentinel başarısız → Bybit/OKX/Kraken
-    if (!xauPrice) {
-      const freeData = await fetchFreeMetalPrices().catch(() => null);
-      if (freeData?.xau) {
-        priceSource = freeData.source || "Kripto Borsa";
-        xauQuote = freeData.xau; xauPrice = freeData.xau.c;
-        if (freeData.xag) { xagQuote = freeData.xag; xagPrice = freeData.xag.c; }
-      }
-    }
-
-    // 3. Her ikisi de başarısız → ETF fallback (Finnhub GLD/SLV)
+    // Öncelik: Metal Sentinel → Bybit/OKX/Kraken → GLD/SLV ETF
     const hasFinnhub = FinnhubAPI.hasKey();
-    const [gld, slv, iau, spy, fxData] = await Promise.all([
+    const [msData, freeData, gld, slv, iau, spy, fxData] = await Promise.all([
+      fetchMetalSentinel().catch(() => null),
+      fetchFreeMetalPrices().catch(() => null),
       hasFinnhub ? FinnhubAPI.quote("GLD").catch(() => null) : Promise.resolve(null),
       hasFinnhub ? FinnhubAPI.quote("SLV").catch(() => null) : Promise.resolve(null),
       hasFinnhub ? FinnhubAPI.quote("IAU").catch(() => null) : Promise.resolve(null),
@@ -1753,28 +1731,43 @@ async function fetchMetals() {
       fetchPublicFX(),
     ]);
 
+    let xauPrice = null, xauQuote = null;
+    let xagPrice = null, xagQuote = null;
+    let priceSource = "ETF";
+
+    if (msData?.xau) {
+      priceSource = "MetalSentinel";
+      xauQuote = msData.xau; xauPrice = msData.xau.c;
+      if (msData.xag) { xagQuote = msData.xag; xagPrice = msData.xag.c; }
+      if (msData.usdtry) prices.usdtry = msData.usdtry;
+      if (gld?.c && xauPrice) dynamicGLDRatio = xauPrice / gld.c;
+      if (slv?.c && xagPrice) dynamicSLVRatio = xagPrice / slv.c;
+    } else if (freeData?.xau) {
+      priceSource = freeData.source || "Kripto Borsa";
+      xauQuote = freeData.xau; xauPrice = freeData.xau.c;
+      if (freeData.xag) { xagQuote = freeData.xag; xagPrice = freeData.xag.c; }
+      if (gld?.c && xauPrice) dynamicGLDRatio = xauPrice / gld.c;
+      if (slv?.c && xagPrice) dynamicSLVRatio = xagPrice / slv.c;
+    }
+
+    // GoldAPI'de XAG yoksa veya GoldAPI yok → ETF'den hesapla
     if (!xauPrice) {
+      // Dinamik katsayı: GoldAPI ile kalibre edilmişse daha doğru
       const gRatio = dynamicGLDRatio || GLD_RATIO;
       if (gld?.c && gld.c > 100) {
         xauPrice = gld.c * gRatio;
         xauQuote = { c:xauPrice, o:gld.o*gRatio, h:gld.h*gRatio, l:gld.l*gRatio, pc:gld.pc*gRatio, d:gld.d*gRatio, dp:gld.dp };
-        priceSource = "ETF";
       } else if (iau?.c && iau.c > 10) {
         xauPrice = iau.c * 100;
         xauQuote = { c:xauPrice, o:iau.o*100, h:iau.h*100, l:iau.l*100, pc:iau.pc*100, d:iau.d*100, dp:iau.dp };
-        priceSource = "ETF";
       }
     }
+    // Gümüş ETF fallback — Kraken/SI1!/GoldAPI çalışmazsa SLV ETF × kalibre katsayı
     if (!xagPrice && slv?.c && slv.c > 1) {
       const sRatio = dynamicSLVRatio || SLV_RATIO;
       xagPrice = slv.c * sRatio;
       xagQuote = { c:xagPrice, o:slv.o*sRatio, h:slv.h*sRatio, l:slv.l*sRatio, pc:slv.pc*sRatio, d:slv.d*sRatio, dp:slv.dp };
     }
-
-    // ETF katsayı kalibrasyonu (doğruluk için)
-    if (gld?.c && xauPrice) dynamicGLDRatio = xauPrice / gld.c;
-    if (slv?.c && xagPrice) dynamicSLVRatio = xagPrice / slv.c;
-
 
     const utry   = fxData.try;
     const eurusd = fxData.eur;
