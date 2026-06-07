@@ -963,7 +963,7 @@ const CONFIG = {
   // Metal Sentinel (birincil) → Finnhub (hisse/ETF) → GoldAPI (yedek)
   MS_KEY:       "a51a674678msh4b2cb9078f167bep198514jsn49ed0c5fd42a",   // RapidAPI key — metal-sentinel.com
   FINNHUB_KEY:  "FINNHUB_KEY_HERE",          // finnhub.io free key
-  GOLDAPI_KEY:  "",                           // goldapi.io (opsiyonel, boş bırakılabilir)
+  GOLDAPI_KEY:  "goldapi-8a87684cbd8cedb630f4ed8e69916c41-io",  // goldapi.io (birincil metal fiyat kaynağı)
 
   THRESHOLDS: {
     pe:          { dir: "down", t: [15, 25, 40, 60]  },
@@ -1630,27 +1630,27 @@ async function fetchFromGoldAPI() {
 
 async function fetchMetals() {
   try {
-    // ── Fiyat öncelik sırası: Metal Sentinel → Bybit/OKX → Kraken → ETF ──
+    // ── Fiyat öncelik sırası: GoldAPI → Metal Sentinel → ETF ──
     let xauPrice = null, xauQuote = null;
     let xagPrice = null, xagQuote = null;
     let priceSource = "ETF";
 
-    // 1. Metal Sentinel (cache: 15dk — birincil kaynak)
-    const msData = await fetchMetalSentinel().catch(() => null);
-    if (msData?.xau) {
-      priceSource = "MetalSentinel";
-      xauQuote = msData.xau; xauPrice = msData.xau.c;
-      if (msData.xag) { xagQuote = msData.xag; xagPrice = msData.xag.c; }
-      if (msData.usdtry) prices.usdtry = msData.usdtry;
+    // 1. GoldAPI (birincil — key tanımlıysa)
+    const goldData = await fetchFromGoldAPI().catch(() => null);
+    if (goldData?.xau) {
+      priceSource = "GoldAPI";
+      xauQuote = goldData.xau; xauPrice = goldData.xau.c;
+      if (goldData.xag) { xagQuote = goldData.xag; xagPrice = goldData.xag.c; }
     }
 
-    // 2. Metal Sentinel başarısız → GoldAPI yedek
+    // 2. GoldAPI başarısız → Metal Sentinel (yedek)
     if (!xauPrice) {
-      const goldData = await fetchFromGoldAPI().catch(() => null);
-      if (goldData?.xau) {
-        priceSource = "GoldAPI";
-        xauQuote = goldData.xau; xauPrice = goldData.xau.c;
-        if (goldData.xag) { xagQuote = goldData.xag; xagPrice = goldData.xag.c; }
+      const msData = await fetchMetalSentinel().catch(() => null);
+      if (msData?.xau) {
+        priceSource = "MetalSentinel";
+        xauQuote = msData.xau; xauPrice = msData.xau.c;
+        if (msData.xag) { xagQuote = msData.xag; xagPrice = msData.xag.c; }
+        if (msData.usdtry) prices.usdtry = msData.usdtry;
       }
     }
 
@@ -1693,11 +1693,11 @@ async function fetchMetals() {
     // Kaynak göstergesi güncelle
     const srcEl = document.getElementById("price-source-badge");
     if (srcEl) {
-      const isExact = ["Bybit","OKX","Gate.io","GoldAPI"].includes(priceSource);
-      const xagLabel = xagPrice ? (freeData?.xag ? "" : " · Gümüş: Kraken/ETF") : " · Gümüş: —";
+      const isExact = ["GoldAPI","MetalSentinel","Bybit","OKX","Gate.io"].includes(priceSource);
+      const xagLabel = xagPrice ? "" : " · Gümüş: —";
       srcEl.textContent = isExact
-        ? "✅ Altın: " + priceSource + xagLabel
-        : "⚡ ETF bazlı" + (xagPrice ? " · Gümüş: Kraken/ETF" : "");
+        ? "✅ " + priceSource + xagLabel + " · " + new Date().toLocaleTimeString("tr-TR")
+        : "⚡ ETF bazlı" + (xagPrice ? "" : " · Gümüş: —");
       srcEl.style.color = (isExact && xagPrice) ? "var(--green)" : "var(--yellow)";
     }
 
@@ -1733,9 +1733,8 @@ async function fetchMetals() {
     setText("ref-xag", xagPrice ? fmtPrice(xagPrice, 3) : "—");
     setText("ref-usd", utry ? num(utry) : "—");
 
-    // Kaynak notu (ETF bazlı olduğunu belirt)
     const note = document.getElementById("data-source-note");
-    if (note) note.textContent = `GLD/SLV ETF bazlı · ${new Date().toLocaleTimeString("tr-TR")} güncellendi`;
+    if (note) note.textContent = `${priceSource} · ${new Date().toLocaleTimeString("tr-TR")} güncellendi · Sonraki güncelleme: 3 saat`;
 
   } catch(e) { console.warn("Metal fetch error:", e); }
 }
@@ -2670,8 +2669,8 @@ if (document.readyState === "loading") {
   initData();
 }
 
-// 30 saniyede bir fiyatları güncelle (ETF bazlı — çok istek kullanmaz)
-setInterval(fetchMetals, 30000);
+// 3 saatte bir fiyatları güncelle (GoldAPI key ile — limit tasarrufu)
+setInterval(fetchMetals, 3 * 60 * 60 * 1000);
 // 5 dakikada bir haberleri yenile
 setInterval(loadMetalNews, 5 * 60 * 1000);
 // Fiyat kaynağı: Bybit/OKX/Gate.io — sınırsız, 30sn'de bir çalışır
