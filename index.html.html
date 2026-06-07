@@ -1464,9 +1464,11 @@ async function msRequest(path) {
   const key = getMSKey();
   if (!key) throw new Error("NO_MS_KEY");
   const res = await fetch(`${MS_BASE}${path}`, {
+    method: "GET",
     headers: {
       "x-rapidapi-key":  key,
-      "x-rapidapi-host": "metal-sentinel.p.rapidapi.com"
+      "x-rapidapi-host": "metal-sentinel.p.rapidapi.com",
+      "Content-Type":    "application/json"
     }
   });
   if (res.status === 401 || res.status === 403) throw new Error("MS_BAD_KEY");
@@ -1511,14 +1513,14 @@ async function fetchMetalSentinel() {
 
   try {
     // 3 isteği paralel at — hepsi aynı rate limit altında
-    // Endpoint'ler: /spot?metal=AU&currency=USD (Kitco kaynaklı spot fiyat)
-    // /fx?base=USD&quote=TRY (döviz)
-    // /history?metal=AU&currency=USD&limit=30 (geçmiş)
-    const [auRaw, agRaw, fxRaw] = await Promise.all([
-      msRequest("/spot?metal=AU&currency=USD").catch(e => { console.warn("MS gold:", e.message); return null; }),
-      msRequest("/spot?metal=AG&currency=USD").catch(e => { console.warn("MS silver:", e.message); return null; }),
-      msRequest("/fx?base=USD&quote=TRY").catch(e => { console.warn("MS forex:", e.message); return null; }),
+    // Doküman endpoint'leri (siteden alındı):
+    // Altın: /api/metal-quote?metal=AU&currency=USD
+    // Gümüş: /silver-price?currency=USD
+    const [auRaw, agRaw] = await Promise.all([
+      msRequest("/api/metal-quote?metal=AU&currency=USD").catch(e => { console.warn("MS gold:", e.message); return null; }),
+      msRequest("/silver-price?currency=USD").catch(e => { console.warn("MS silver:", e.message); return null; }),
     ]);
+    const fxRaw = null; // Forex endpoint henüz bilinmiyor, fetchPublicFX kullanılacak
 
     console.log("MS raw gold:", JSON.stringify(auRaw).slice(0, 300));
     console.log("MS raw silver:", JSON.stringify(agRaw).slice(0, 300));
@@ -1528,11 +1530,8 @@ async function fetchMetalSentinel() {
     const xagQ = msParseQuote(agRaw);
     if (!xauQ) { console.warn("MS: altın parse edilemedi"); return msCache.xau ? msCache : null; }
 
-    // /fx response: { rate: 38.5 } veya { results:[{price:38.5}] }
-    const usdtry = fxRaw?.rate ? parseFloat(fxRaw.rate)
-                 : fxRaw?.results?.[0]?.price ? parseFloat(fxRaw.results[0].price)
-                 : fxRaw?.price ? parseFloat(fxRaw.price)
-                 : null;
+    // USD/TRY: fetchPublicFX (exchangerate-api) üzerinden alınır
+    const usdtry = null; // fetchMetals içinde fetchPublicFX ile doldurulur
 
     msCache.xau      = xauQ;
     msCache.xag      = xagQ;
@@ -1566,8 +1565,8 @@ async function fetchMetalSentinelHistory() {
 
   try {
     const [auHist, agHist] = await Promise.all([
-      msRequest("/history?metal=AU&currency=USD&limit=30").catch(() => null),
-      msRequest("/history?metal=AG&currency=USD&limit=30").catch(() => null),
+      msRequest("/api/metal-history?metal=AU&currency=USD&limit=30").catch(() => null),
+      msRequest("/api/metal-history?metal=AG&currency=USD&limit=30").catch(() => null),
     ]);
 
     if (auHist?.results?.length > 5) {
