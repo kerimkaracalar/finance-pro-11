@@ -1556,84 +1556,34 @@ async function fetchMetalSentinel() {
 }
 
 // Geçmiş veri — teknik analiz için (sayfa açılışında 1 kez, 24 saat cache)
-// ══════════════════════════════════════════════════════════════
-// ÜCRETSIZ GEÇMİŞ VERİ — Stooq.com CSV (key yok, limit yok)
-// XAU/USD ve XAG/USD günlük kapanış fiyatları · ~250 gün
-// Cache: 24 saat (günlük veri, sık güncellemeye gerek yok)
-// ══════════════════════════════════════════════════════════════
-const histCache = { lastFetch: 0 };
+async function fetchMetalSentinelHistory() {
+  if (!getMSKey()) return;
+  if (msCache.histFetch && (Date.now() - msCache.histFetch) < 24*60*60*1000) return;
 
-async function fetchFreeHistory() {
-  // 24 saat cache — teknik analiz için günlük veri yeterli
-  if (histCache.lastFetch && (Date.now() - histCache.lastFetch) < 24 * 60 * 60 * 1000) {
-    console.log("Geçmiş veri cache'den alınıyor");
-    return;
-  }
-
-  // Stooq.com — ücretsiz, key yok, CORS açık, günlük OHLC CSV
-  // Format: Date,Open,High,Low,Close,Volume
-  const stooqFetch = async (symbol) => {
-    const url = `https://stooq.com/q/d/l/?s=${symbol}&i=d`;
-    try {
-      const res = await fetch(url);
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      const csv = await res.text();
-      const lines = csv.trim().split("\n").slice(1); // header satırını atla
-      // Son 200 satır (yaklaşık 200 işlem günü = ~10 ay)
-      return lines.slice(-200)
-        .map(line => {
-          const parts = line.split(",");
-          const close = parseFloat(parts[4]); // Close sütunu
-          return isNaN(close) || close <= 0 ? null : close;
-        })
-        .filter(Boolean);
-    } catch(e) {
-      console.warn(`Stooq ${symbol} hata:`, e.message);
-      return null;
-    }
-  };
+  const now  = Math.floor(Date.now() / 1000);
+  const from = now - 180 * 24 * 3600;
 
   try {
-    console.log("Stooq.com geçmiş veri çekiliyor…");
-    const [xauData, xagData] = await Promise.all([
-      stooqFetch("xauusd"),
-      stooqFetch("xagusd"),
+    const [auHist, agHist] = await Promise.all([
+      msRequest("/api/metal-history?metal=AU&currency=USD&limit=30").catch(() => null),
+      msRequest("/api/metal-history?metal=AG&currency=USD&limit=30").catch(() => null),
     ]);
 
-    if (xauData && xauData.length > 20) {
-      priceHistory.xau = xauData;
-      console.log("Stooq XAU: " + xauData.length + " günlük nokta yüklendi");
+    if (auHist?.results?.length > 5) {
+      priceHistory.xau = auHist.results
+        .sort((a,b) => (a.timestamp||0) - (b.timestamp||0))
+        .map(r => parseFloat(r.price)).filter(p => p > 0);
+      console.log("MS Geçmiş AU: " + priceHistory.xau.length + " nokta");
     }
-    if (xagData && xagData.length > 20) {
-      priceHistory.xag = xagData;
-      console.log("Stooq XAG: " + xagData.length + " günlük nokta yüklendi");
+    if (agHist?.results?.length > 5) {
+      priceHistory.xag = agHist.results
+        .sort((a,b) => (a.timestamp||0) - (b.timestamp||0))
+        .map(r => parseFloat(r.price)).filter(p => p > 0);
+      console.log("MS Geçmiş AG: " + priceHistory.xag.length + " nokta");
     }
-
-    histCache.lastFetch = Date.now();
-
-    // Geçmiş veri geldi → teknik analiz ve grafikleri hemen güncelle
-    if ((xauData?.length > 20) || (xagData?.length > 20)) {
-      updateForecasts(null, null);
-      const statusEl = document.getElementById("data-status");
-      if (statusEl) statusEl.textContent = `✅ Hazır · ${xauData?.length||0}g XAU, ${xagData?.length||0}g XAG`;
-      const noteEl = document.getElementById("data-source-note");
-      if (noteEl && xauData?.length > 20) {
-        const existing = noteEl.textContent;
-        noteEl.textContent = existing.replace("Sonraki güncelleme", `Geçmiş: ${xauData.length}g · Sonraki güncelleme`);
-      }
-    }
+    msCache.histFetch = Date.now();
   } catch(e) {
-    console.warn("fetchFreeHistory hata:", e.message);
-    // Fallback: sentetik geçmiş (mevcut fiyat + 52H metrik yoksa tahminsel)
-    if (prices.xau && !priceHistory.xau.length) {
-      priceHistory.xau = syntheticHistory(prices.xau, {}, 120);
-      console.log("Sentetik XAU geçmişi üretildi (fallback)");
-    }
-    if (prices.xag && !priceHistory.xag.length) {
-      priceHistory.xag = syntheticHistory(prices.xag, {}, 120);
-      console.log("Sentetik XAG geçmişi üretildi (fallback)");
-    }
-    if (prices.xau || prices.xag) updateForecasts(null, null);
+    console.warn("MS history hata:", e.message);
   }
 }
 
@@ -1790,11 +1740,7 @@ async function fetchMetals() {
 }
 
 async function fetchMetalMetrics() {
-  // Finnhub key yoksa sadece öngörüyü tetikle (stooq geçmişi zaten var)
-  if (!FinnhubAPI.hasKey()) {
-    updateForecasts(null, null);
-    return;
-  }
+  if (!FinnhubAPI.hasKey()) return;
   try {
     // Metrik + candle paralel çek (candle ücretsiz planda çalışmazsa sentetik üret)
     const now   = Math.floor(Date.now()/1000);
@@ -1807,24 +1753,16 @@ async function fetchMetalMetrics() {
     ]);
 
     // GLD/SLV candle → fiyat geçmişi (ücretsiz planda çalışırsa)
-    // Stooq verisi zaten yüklüyse candle ile üzerine yaz (daha kısa olabilir, stooq daha iyi)
     if (gldCandle?.s === "ok" && gldCandle?.c?.length > 10) {
-      const candleData = gldCandle.c.map(p => p * GLD_RATIO);
-      // Stooq yoksa veya candle daha uzunsa kullan
-      if (!priceHistory.xau.length || candleData.length > priceHistory.xau.length) {
-        priceHistory.xau = candleData;
-      }
-    } else if (prices.xau && xauM?.metric && !priceHistory.xau.length) {
-      // Stooq da yok, candle da yok → sentetik üret
+      priceHistory.xau = gldCandle.c.map(p => p * GLD_RATIO);
+    } else if (prices.xau && xauM?.metric) {
+      // Candle gelmedi → 52H hi/lo + getirilerden sentetik ~120 gün üret
       priceHistory.xau = syntheticHistory(prices.xau, xauM.metric, 120);
     }
 
     if (slvCandle?.s === "ok" && slvCandle?.c?.length > 10) {
-      const candleData = slvCandle.c.map(p => p * SLV_RATIO);
-      if (!priceHistory.xag.length || candleData.length > priceHistory.xag.length) {
-        priceHistory.xag = candleData;
-      }
-    } else if (prices.xag && xagM?.metric && !priceHistory.xag.length) {
+      priceHistory.xag = slvCandle.c.map(p => p * SLV_RATIO);
+    } else if (prices.xag && xagM?.metric) {
       priceHistory.xag = syntheticHistory(prices.xag, xagM.metric, 120);
     }
 
@@ -2720,7 +2658,7 @@ async function initData() {
   const status = document.getElementById("data-status");
   if (status) status.textContent = "⏳ Veriler yükleniyor…";
   await fetchMetals();
-  fetchFreeHistory(); // Stooq.com ücretsiz geçmiş veri (teknik analiz için, async)
+  fetchMetalSentinelHistory(); // Teknik analiz geçmişi (async, beklemez)
   loadMetalNews();
   updatePortfolio();
 }
