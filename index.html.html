@@ -94,23 +94,15 @@ header {
 .key-box button:hover { background: var(--panel-3); border-color: var(--gold); }
 .key-ok { color: var(--gold) !important; border-color: rgba(232,169,48,.4) !important; }
 
-/* === PIYASA BANDI (üst kayan şerit) === */
-.ticker-band {
-  background: var(--panel); border: 1px solid var(--border);
-  border-radius: 10px; overflow: hidden; margin-bottom: 20px;
-  height: 40px; display: flex; align-items: center;
-}
-.ticker-inner { display: flex; gap: 0; flex-shrink: 0; }
-.ticker-item {
-  display: flex; align-items: center; gap: 8px;
-  padding: 0 20px; border-right: 1px solid var(--border);
-  white-space: nowrap; font-size: 13px;
-}
+
+
+
+
 .ticker-item .t-name { color: var(--muted); font-weight: 500; font-size: 12px; }
 .ticker-item .t-price { font-family: 'DM Mono', monospace; font-weight: 500; }
 .ticker-item .t-chg { font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 5px; }
-.t-up { color: var(--green); background: rgba(46,204,113,.12); }
-.t-dn { color: var(--red); background: rgba(255,92,108,.12); }
+
+
 
 /* === TABS === */
 .tabs { display: flex; gap: 4px; margin-bottom: 22px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 4px; width: fit-content; }
@@ -481,25 +473,33 @@ footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 3
         <span>Altın & Gümüş · Hisse Analiz Merkezi</span>
       </div>
     </div>
-    <div class="key-box" style="gap:6px;flex-wrap:wrap">
-      <input id="apiKey" type="password" placeholder="Finnhub API anahtarı" autocomplete="off" />
-      <input id="metalSentinelKey" type="password" placeholder="Metal Sentinel (RapidAPI) anahtarı" autocomplete="off" style="width:240px" />
-      <button id="saveKey">Kaydet</button>
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <div id="data-status" style="font-size:12px;color:var(--muted)">⏳ Bağlanıyor…</div>
+      <div id="price-source-badge" style="font-size:12px;font-weight:700;color:var(--yellow)">⚡ Yükleniyor</div>
     </div>
   </header>
 
-  <!-- TICKER BANDI -->
-  <div class="ticker-band">
-    <div class="ticker-inner" id="tickerInner">
-      <div class="ticker-item"><span class="t-name">XAU/USD</span><span class="t-price" id="t-xau">—</span><span class="t-chg" id="tc-xau">—</span></div>
-      <div class="ticker-item"><span class="t-name">XAG/USD</span><span class="t-price" id="t-xag">—</span><span class="t-chg" id="tc-xag">—</span></div>
-      <div class="ticker-item"><span class="t-name">ALTIN/GÜMÜŞ ORAN</span><span class="t-price" id="t-ratio">—</span></div>
-      <div class="ticker-item"><span class="t-name">USD/TRY</span><span class="t-price" id="t-usd">—</span></div>
-      <div class="ticker-item"><span class="t-name">GR ALTIN (TL)</span><span class="t-price" id="t-xautr">—</span></div>
-      <div class="ticker-item"><span class="t-name">S&P 500</span><span class="t-price" id="t-spy">—</span><span class="t-chg" id="tc-spy">—</span></div>
-    </div>
+  <!-- TradingView Ticker Widget -->
+  <div class="tradingview-widget-container" style="margin-bottom:20px;border-radius:12px;overflow:hidden">
+    <div class="tradingview-widget-container__widget"></div>
+    <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-tickers.js" async>
+    {
+      "symbols": [
+        {"proName":"OANDA:XAUUSD","title":"Gold"},
+        {"proName":"OANDA:XAGUSD","title":"Silver"},
+        {"proName":"FX_IDC:USDTRY","title":"USD/TRY"},
+        {"proName":"TVC:SILVER","title":"Silver Spot"},
+        {"proName":"TVC:GOLD","title":"Gold Spot"},
+        {"proName":"SP:SPX","title":"S&P 500"}
+      ],
+      "colorTheme": "dark",
+      "locale": "tr",
+      "isTransparent": true,
+      "showSymbolLogo": true,
+      "largeChartUrl": ""
+    }
+    </script>
   </div>
-
   <!-- TABS -->
   <div class="tabs">
     <button class="tab tab-gold active" data-tab="altin">🥇 Altın</button>
@@ -959,6 +959,12 @@ const CONFIG = {
     { min: 0,  label: "GÜÇLÜ SAT",   color: "var(--red)"     },
   ],
 
+  // ── Gömülü API Key'ler (kullanıcıdan istenmez) ──
+  // Metal Sentinel (birincil) → Finnhub (hisse/ETF) → GoldAPI (yedek)
+  MS_KEY:       "a51a674678msh4b2cb9078f167bep198514jsn49ed0c5fd42a",   // RapidAPI key — metal-sentinel.com
+  FINNHUB_KEY:  "FINNHUB_KEY_HERE",          // finnhub.io free key
+  GOLDAPI_KEY:  "",                           // goldapi.io (opsiyonel, boş bırakılabilir)
+
   THRESHOLDS: {
     pe:          { dir: "down", t: [15, 25, 40, 60]  },
     pb:          { dir: "down", t: [1.5, 3, 6, 10]   },
@@ -993,13 +999,9 @@ const CONFIG = {
 ============================================================ -->
 <script>
 const FinnhubAPI = {
-  key: localStorage.getItem("finnhub_key") || "",
-
-  setKey(k) {
-    this.key = (k || "").trim();
-    localStorage.setItem("finnhub_key", this.key);
-    return this.key;
-  },
+  // CONFIG'den gömülü key, localStorage fallback (eski kayıtlı key için)
+  get key() { return CONFIG.FINNHUB_KEY || localStorage.getItem("finnhub_key") || ""; },
+  setKey(k) { localStorage.setItem("finnhub_key", k); return k; },
   hasKey() { return !!this.key; },
 
   async request(path) {
@@ -1361,19 +1363,7 @@ let prices = { xau: null, xag: null, usdtry: null, eurusd: null };
 let portfolio = JSON.parse(localStorage.getItem("portfolio_v2") || "[]");
 
 // ── API KEY ────────────────────────────────────────
-const keyInput        = document.getElementById("apiKey");
-const metalSentinelInput = document.getElementById("metalSentinelKey");
-const saveBtn         = document.getElementById("saveKey");
-if (FinnhubAPI.hasKey()) { keyInput.value = FinnhubAPI.key; markSaved(); }
-const savedMSKey = localStorage.getItem("metal_sentinel_key") || "";
-if (savedMSKey && metalSentinelInput) metalSentinelInput.value = savedMSKey;
-function markSaved() { saveBtn.textContent = "✓ Kayıtlı"; saveBtn.classList.add("key-ok"); }
-saveBtn.addEventListener("click", () => {
-  const msKey = metalSentinelInput?.value?.trim();
-  if (msKey) localStorage.setItem("metal_sentinel_key", msKey);
-  if (FinnhubAPI.setKey(keyInput.value)) { markSaved(); initData(); }
-  else if (msKey) { markSaved(); initData(); } // sadece MS key ile de çalış
-});
+// API key'ler CONFIG'de gömülü — kullanıcıdan key istenmez
 
 // ── TABS ──────────────────────────────────────────
 document.querySelectorAll(".tab").forEach(t => {
@@ -1459,63 +1449,83 @@ let dynamicGLDRatio = GLD_RATIO;
 let dynamicSLVRatio = SLV_RATIO;
 
 // ══════════════════════════════════════════════════════════
-// METAL SENTINEL API — RapidAPI üzerinden, Kitco kaynaklı
-// Ücretsiz: 15.000 req/ay · Her 15 dakikada bir çekiliyor
-// https://rapidapi.com/ghostsvos/api/metal-sentinel
+// METAL SENTINEL API — RapidAPI · Kitco kaynaklı
+// Ücretsiz: 15.000 req/ay · Cache: 15 dakika
+// Doküman: https://metal-sentinel.com/endpoints
 // ══════════════════════════════════════════════════════════
 
 const MS_BASE     = "https://metal-sentinel.p.rapidapi.com";
-const MS_INTERVAL = 15 * 60 * 1000; // 15 dakika
-const msCache     = { xau: null, xag: null, usdtry: null, lastFetch: 0, history: { xau: null, xag: null, histFetch: 0 } };
+const MS_INTERVAL = 15 * 60 * 1000;
+const msCache     = { xau:null, xag:null, usdtry:null, lastFetch:0, histFetch:0 };
 
-function getMSKey() { return localStorage.getItem("metal_sentinel_key") || ""; }
+function getMSKey() { return CONFIG.MS_KEY || localStorage.getItem("metal_sentinel_key") || ""; }
 
 async function msRequest(path) {
   const key = getMSKey();
-  if (!key) return null;
+  if (!key) throw new Error("NO_MS_KEY");
   const res = await fetch(`${MS_BASE}${path}`, {
     headers: {
       "x-rapidapi-key":  key,
       "x-rapidapi-host": "metal-sentinel.p.rapidapi.com"
     }
   });
-  if (!res.ok) throw new Error(`MS ${res.status}: ${await res.text().catch(()=>"")}`);
+  if (res.status === 401 || res.status === 403) throw new Error("MS_BAD_KEY");
+  if (res.status === 429) throw new Error("MS_RATE_LIMIT");
+  if (!res.ok) {
+    const txt = await res.text().catch(() => "");
+    throw new Error(`MS_HTTP_${res.status}: ${txt.slice(0,100)}`);
+  }
   return res.json();
 }
 
-function msQuote(data) {
-  // metal-quote response: { results: [{ price, open, high, low, prevClose, change, changePercent, ... }] }
-  const r = data?.results?.[0];
-  if (!r?.price) return null;
-  const c  = parseFloat(r.price);
-  const pc = parseFloat(r.prevClose) || c;
-  const h  = parseFloat(r.high)  || c;
-  const l  = parseFloat(r.low)   || c;
-  const d  = parseFloat(r.change) || c - pc;
-  const dp = parseFloat(r.changePercent) || (pc ? d/pc*100 : 0);
-  return { c, o: parseFloat(r.open)||pc, h, l, pc, d, dp };
+// Metal Sentinel response → standart quote objesi
+// Tüm olası response yapılarını dener: flat, results[], data[], vb.
+function msParseQuote(data) {
+  if (!data) return null;
+
+  // Olası yapılar: { results:[{...}] } veya { data:[{...}] } veya direkt { price:... }
+  const r = data?.results?.[0] ?? data?.data?.[0] ?? data?.result ?? data;
+  if (!r || typeof r !== "object") { console.warn("MS parse: veri yok", JSON.stringify(data).slice(0,200)); return null; }
+
+  // Fiyat alanı: price, bid, ask, last, rate, value
+  const rawPrice = r.price ?? r.bid ?? r.ask ?? r.last ?? r.rate ?? r.value ?? r.close;
+  const c = rawPrice ? parseFloat(rawPrice) : 0;
+  if (!c || c <= 0 || isNaN(c)) { console.warn("MS parse: fiyat bulunamadı", r); return null; }
+
+  const pc = parseFloat(r.prevClose ?? r.previousClose ?? r.prev_close ?? r.open ?? c);
+  const h  = parseFloat(r.high  ?? r.dayHigh  ?? c);
+  const l  = parseFloat(r.low   ?? r.dayLow   ?? c);
+  const d  = parseFloat(r.change ?? r.ch ?? (c - pc));
+  const dp = parseFloat(r.changePercent ?? r.changePct ?? r.chp ?? r.pct_change ?? (pc ? d/pc*100 : 0));
+
+  console.log("MS parsed:", { c, pc, h, l, d: d.toFixed(3), dp: dp.toFixed(3) });
+  return { c, o: parseFloat(r.open ?? pc), h, l, pc, d, dp };
 }
 
 async function fetchMetalSentinel() {
   if (!getMSKey()) return null;
   const now = Date.now();
-  // Cache geçerliyse dön (15 dk)
   if (msCache.xau && (now - msCache.lastFetch) < MS_INTERVAL) {
-    return msCache;
+    return msCache; // Cache geçerli
   }
+
   try {
-    const [auData, agData, fxData] = await Promise.all([
-      msRequest("/api/metal-quote?symbol=AU&currency=USD").catch(() => null),
-      msRequest("/api/metal-quote?symbol=AG&currency=USD").catch(() => null),
-      msRequest("/api/forex-quote?symbol=USDTRY").catch(() => null),
+    // 3 isteği paralel at — hepsi aynı rate limit altında
+    const [auRaw, agRaw, fxRaw] = await Promise.all([
+      msRequest("/api/metal-quote?symbol=AU&currency=USD").catch(e => { console.warn("MS gold:", e.message); return null; }),
+      msRequest("/api/metal-quote?symbol=AG&currency=USD").catch(e => { console.warn("MS silver:", e.message); return null; }),
+      msRequest("/api/forex-quote?symbol=USD&currency=TRY").catch(e => { console.warn("MS forex:", e.message); return null; }),
     ]);
 
-    const xauQ = msQuote(auData);
-    const xagQ = msQuote(agData);
-    if (!xauQ) return null;
+    console.log("MS raw gold:", JSON.stringify(auRaw).slice(0, 200));
+    console.log("MS raw silver:", JSON.stringify(agRaw).slice(0, 200));
 
-    // USD/TRY
-    const fxR = fxData?.results?.[0];
+    const xauQ = msParseQuote(auRaw);
+    const xagQ = msParseQuote(agRaw);
+    if (!xauQ) { console.warn("MS: altın parse edilemedi"); return msCache.xau ? msCache : null; }
+
+    // forex-quote?symbol=USD&currency=TRY → USD başına TRY = doğrudan USD/TRY
+    const fxR = fxRaw?.results?.[0];
     const usdtry = fxR?.price ? parseFloat(fxR.price) : null;
 
     msCache.xau      = xauQ;
@@ -1524,206 +1534,124 @@ async function fetchMetalSentinel() {
     msCache.lastFetch = now;
     msCache.source   = "MetalSentinel";
 
-    // Kalibre et
-    const gld = await FinnhubAPI.quote("GLD").catch(() => null);
-    const slv = await FinnhubAPI.quote("SLV").catch(() => null);
-    if (gld?.c && xauQ.c) dynamicGLDRatio = xauQ.c / gld.c;
-    if (slv?.c && xagQ?.c) dynamicSLVRatio = xagQ.c / slv.c;
-
-    // Istek kalan sayısı footer'a
     const srcEl = document.getElementById("price-source-badge");
     if (srcEl) {
-      srcEl.textContent = `✅ Metal Sentinel (Kitco) · ${new Date().toLocaleTimeString("tr-TR")} güncellendi`;
+      srcEl.textContent = "✅ Metal Sentinel · " + new Date().toLocaleTimeString("tr-TR");
       srcEl.style.color = "var(--green)";
     }
+    const noteEl = document.getElementById("data-source-note");
+    if (noteEl) noteEl.textContent = "Metal Sentinel (Kitco) · " + new Date().toLocaleTimeString("tr-TR") + " güncellendi";
 
-    console.log(`Metal Sentinel: XAU=$${xauQ.c} XAG=$${xagQ?.c||"—"} TRY=${usdtry}`);
+    console.log("MS OK: XAU=$" + xauQ.c.toFixed(2) + " XAG=$" + (xagQ?.c?.toFixed(3)||"—") + " TRY=" + (usdtry?.toFixed(2)||"—"));
     return msCache;
   } catch(e) {
-    console.warn("Metal Sentinel error:", e.message);
+    console.warn("Metal Sentinel hata:", e.message);
     return msCache.xau ? msCache : null;
   }
 }
 
-// Metal Sentinel ile geçmiş verisi çek (teknik analiz için)
-// Ayda sadece 1-2 kez çağrılır (sayfa yüklenince)
+// Geçmiş veri — teknik analiz için (sayfa açılışında 1 kez, 24 saat cache)
 async function fetchMetalSentinelHistory() {
   if (!getMSKey()) return;
-  const now = Math.floor(Date.now() / 1000);
-  const from = now - 180 * 24 * 3600; // 180 gün geriye
+  if (msCache.histFetch && (Date.now() - msCache.histFetch) < 24*60*60*1000) return;
 
-  // Cache 24 saat geçerli
-  if (msCache.history.histFetch && (Date.now() - msCache.history.histFetch) < 24*60*60*1000) return;
+  const now  = Math.floor(Date.now() / 1000);
+  const from = now - 180 * 24 * 3600;
 
   try {
     const [auHist, agHist] = await Promise.all([
-      msRequest(`/api/metal-history?symbol=AU&currency=USD&startTime=${from}&endTime=${now}&limit=30`).catch(() => null),
-      msRequest(`/api/metal-history?symbol=AG&currency=USD&startTime=${from}&endTime=${now}&limit=30`).catch(() => null),
+      msRequest("/api/metal-history?symbol=AU&currency=USD&startTime=" + from + "&endTime=" + now + "&limit=30").catch(() => null),
+      msRequest("/api/metal-history?symbol=AG&currency=USD&startTime=" + from + "&endTime=" + now + "&limit=30").catch(() => null),
     ]);
 
-    // Geçmiş veriyi priceHistory'ye doldur
     if (auHist?.results?.length > 5) {
       priceHistory.xau = auHist.results
-        .sort((a,b) => a.timestamp - b.timestamp)
-        .map(r => parseFloat(r.price))
-        .filter(p => p > 0);
-      console.log(`MS Geçmiş: ${priceHistory.xau.length} altın veri noktası yüklendi`);
+        .sort((a,b) => (a.timestamp||0) - (b.timestamp||0))
+        .map(r => parseFloat(r.price)).filter(p => p > 0);
+      console.log("MS Geçmiş AU: " + priceHistory.xau.length + " nokta");
     }
     if (agHist?.results?.length > 5) {
       priceHistory.xag = agHist.results
-        .sort((a,b) => a.timestamp - b.timestamp)
-        .map(r => parseFloat(r.price))
-        .filter(p => p > 0);
-      console.log(`MS Geçmiş: ${priceHistory.xag.length} gümüş veri noktası yüklendi`);
+        .sort((a,b) => (a.timestamp||0) - (b.timestamp||0))
+        .map(r => parseFloat(r.price)).filter(p => p > 0);
+      console.log("MS Geçmiş AG: " + priceHistory.xag.length + " nokta");
     }
-    msCache.history.histFetch = Date.now();
+    msCache.histFetch = Date.now();
   } catch(e) {
-    console.warn("MS history error:", e.message);
+    console.warn("MS history hata:", e.message);
   }
 }
 
 
-// Fiyat quote nesnesi oluştur
+// Fiyat quote objesi oluştur
 function makeQuote(c, pc, h, l) {
   pc = pc || c; h = h || c; l = l || c;
   return { c, o:pc, h, l, pc, d:c-pc, dp:pc ? (c-pc)/pc*100 : 0 };
 }
 
-async function fetchFreeMetalPrices() {
-  let xauResult = null, xagResult = null, source = "ETF";
-
-  // ── ALTIN: Bybit → OKX → Gate.io → GoldAPI ──────────────
-  // Bybit PAXG (1 PAXG = 1 troy oz altın)
-  try {
-    const res = await fetch("https://api.bybit.com/v5/market/tickers?category=spot&symbol=PAXGUSDT");
-    if (res.ok) {
-      const d = await res.json();
-      const t = d?.result?.list?.[0];
-      if (t?.lastPrice) {
-        xauResult = makeQuote(parseFloat(t.lastPrice), parseFloat(t.prevPrice24h), parseFloat(t.highPrice24h), parseFloat(t.lowPrice24h));
-        source = "Bybit";
-      }
-    }
-  } catch(e) {}
-
-  // OKX yedek
-  if (!xauResult) {
-    try {
-      const res = await fetch("https://www.okx.com/api/v5/market/ticker?instId=PAXG-USDT");
-      if (res.ok) {
-        const d = await res.json();
-        const t = d?.data?.[0];
-        if (t?.last) { xauResult = makeQuote(parseFloat(t.last), parseFloat(t.open24h), parseFloat(t.high24h), parseFloat(t.low24h)); source = "OKX"; }
-      }
-    } catch(e) {}
-  }
-
-  // Gate.io yedek
-  if (!xauResult) {
-    try {
-      const res = await fetch("https://api.gateio.ws/api/v4/spot/tickers?currency_pair=PAXG_USDT");
-      if (res.ok) {
-        const d = await res.json();
-        const t = d?.[0];
-        if (t?.last) {
-          const p = parseFloat(t.last);
-          const pc = t.change_percentage ? p/(1+parseFloat(t.change_percentage)/100) : p;
-          xauResult = makeQuote(p, pc, parseFloat(t.high_24h), parseFloat(t.low_24h));
-          source = "Gate.io";
-        }
-      }
-    } catch(e) {}
-  }
-
-  // GoldAPI son çare (key varsa)
-  const goldKey = localStorage.getItem("goldapi_key");
-  if (!xauResult && goldKey) {
-    try {
-      const res = await fetch("https://www.goldapi.io/api/XAU/USD", { headers:{"x-access-token":goldKey} });
-      if (res.ok) {
-        const d = await res.json();
-        if (d?.price) { xauResult = makeQuote(d.price, d.prev_close_price, d.high_price, d.low_price); source = "GoldAPI"; }
-      }
-    } catch(e) {}
-  }
-
-  // ── GÜMÜŞ: Kraken → Finnhub SI1! → GoldAPI → SLV kalibrasyon ──
-  // Kraken XAG/USD — gerçek spot gümüş fiyatı, public API, CORS açık
-  try {
-    const res = await fetch("https://api.kraken.com/0/public/Ticker?pair=XAGUSD");
-    if (res.ok) {
-      const d = await res.json();
-      const t = d?.result?.XXAGZUSD || d?.result?.XAGUSD;
-      if (t?.c?.[0]) {
-        const c  = parseFloat(t.c[0]);   // son işlem
-        const pc = parseFloat(t.o);       // günlük açılış
-        const h  = parseFloat(t.h?.[1]);  // 24h yüksek
-        const l  = parseFloat(t.l?.[1]);  // 24h düşük
-        xagResult = makeQuote(c, pc, h, l);
-      }
-    }
-  } catch(e) { console.warn("Kraken XAG:", e.message); }
-
-  // Finnhub SI1! (COMEX silver futures) — Kraken çalışmazsa
-  if (!xagResult && FinnhubAPI.hasKey()) {
-    try {
-      const q = await FinnhubAPI.quote("SI1!").catch(() => null);
-      if (q?.c && q.c > 1) {
-        xagResult = makeQuote(q.c, q.pc, q.h, q.l);
-        xagResult.d = q.d; xagResult.dp = q.dp;
-      }
-    } catch(e) {}
-  }
-
-  // GoldAPI gümüş (key varsa)
-  if (!xagResult && goldKey) {
-    try {
-      const res = await fetch("https://www.goldapi.io/api/XAG/USD", { headers:{"x-access-token":goldKey} });
-      if (res.ok) {
-        const d = await res.json();
-        if (d?.price) xagResult = makeQuote(d.price, d.prev_close_price, d.high_price, d.low_price);
-      }
-    } catch(e) {}
-  }
-
-  // SLV ETF kalibrasyon — hiçbiri çalışmazsa (fetchMetals içinde yapılır)
-  // xagResult null kalırsa fetchMetals kalibre ETF kullanır
-
-  if (!xauResult) return null;
-  return { xau: xauResult, xag: xagResult, source };
-}
-
-// Geriye dönük uyumluluk için alias
-async function fetchFromGoldAPI() { return null; }
-const GOLDAPI_INTERVAL = 5 * 60 * 1000;
-
+// USD/TRY + EUR/USD — ücretsiz public API (key yok)
 async function fetchPublicFX() {
-  // Ücretsiz, CORS destekli FX API - key gerektirmez
   try {
     const r = await fetch("https://api.exchangerate-api.com/v4/latest/USD");
-    if (r.ok) {
-      const d = await r.json();
-      return { try: d.rates?.TRY, eur: d.rates?.EUR ? 1/d.rates.EUR : null };
-    }
+    if (r.ok) { const d = await r.json(); return { try: d.rates?.TRY, eur: d.rates?.EUR ? 1/d.rates.EUR : null }; }
   } catch {}
   try {
     const r2 = await fetch("https://open.er-api.com/v6/latest/USD");
-    if (r2.ok) {
-      const d2 = await r2.json();
-      return { try: d2.rates?.TRY, eur: d2.rates?.EUR ? 1/d2.rates.EUR : null };
-    }
+    if (r2.ok) { const d2 = await r2.json(); return { try: d2.rates?.TRY, eur: d2.rates?.EUR ? 1/d2.rates.EUR : null }; }
   } catch {}
   return { try: null, eur: null };
 }
 
-async function fetchMetals() {
-  if (!FinnhubAPI.hasKey() && !getMSKey()) return; // En az bir key gerekli
+// GoldAPI yedek (CONFIG.GOLDAPI_KEY doluysa)
+async function fetchFromGoldAPI() {
+  const key = CONFIG.GOLDAPI_KEY || localStorage.getItem("goldapi_key");
+  if (!key) return null;
   try {
-    // Öncelik: Metal Sentinel → Bybit/OKX/Kraken → GLD/SLV ETF
+    const [xauRes, xagRes] = await Promise.all([
+      fetch("https://www.goldapi.io/api/XAU/USD", { headers:{"x-access-token":key} }).catch(()=>null),
+      fetch("https://www.goldapi.io/api/XAG/USD", { headers:{"x-access-token":key} }).catch(()=>null),
+    ]);
+    const xau = xauRes?.ok ? await xauRes.json() : null;
+    const xag = xagRes?.ok ? await xagRes.json() : null;
+    if (!xau?.price) return null;
+    return {
+      xau: makeQuote(xau.price, xau.prev_close_price, xau.high_price, xau.low_price),
+      xag: xag?.price ? makeQuote(xag.price, xag.prev_close_price, xag.high_price, xag.low_price) : null,
+      source: "GoldAPI"
+    };
+  } catch { return null; }
+}
+
+
+async function fetchMetals() {
+  try {
+    // ── Fiyat öncelik sırası: Metal Sentinel → Bybit/OKX → Kraken → ETF ──
+    let xauPrice = null, xauQuote = null;
+    let xagPrice = null, xagQuote = null;
+    let priceSource = "ETF";
+
+    // 1. Metal Sentinel (cache: 15dk — birincil kaynak)
+    const msData = await fetchMetalSentinel().catch(() => null);
+    if (msData?.xau) {
+      priceSource = "MetalSentinel";
+      xauQuote = msData.xau; xauPrice = msData.xau.c;
+      if (msData.xag) { xagQuote = msData.xag; xagPrice = msData.xag.c; }
+      if (msData.usdtry) prices.usdtry = msData.usdtry;
+    }
+
+    // 2. Metal Sentinel başarısız → GoldAPI yedek
+    if (!xauPrice) {
+      const goldData = await fetchFromGoldAPI().catch(() => null);
+      if (goldData?.xau) {
+        priceSource = "GoldAPI";
+        xauQuote = goldData.xau; xauPrice = goldData.xau.c;
+        if (goldData.xag) { xagQuote = goldData.xag; xagPrice = goldData.xag.c; }
+      }
+    }
+
+    // 3. Her ikisi de başarısız → ETF fallback (Finnhub GLD/SLV)
     const hasFinnhub = FinnhubAPI.hasKey();
-    const [msData, freeData, gld, slv, iau, spy, fxData] = await Promise.all([
-      fetchMetalSentinel().catch(() => null),
-      fetchFreeMetalPrices().catch(() => null),
+    const [gld, slv, iau, spy, fxData] = await Promise.all([
       hasFinnhub ? FinnhubAPI.quote("GLD").catch(() => null) : Promise.resolve(null),
       hasFinnhub ? FinnhubAPI.quote("SLV").catch(() => null) : Promise.resolve(null),
       hasFinnhub ? FinnhubAPI.quote("IAU").catch(() => null) : Promise.resolve(null),
@@ -1731,43 +1659,28 @@ async function fetchMetals() {
       fetchPublicFX(),
     ]);
 
-    let xauPrice = null, xauQuote = null;
-    let xagPrice = null, xagQuote = null;
-    let priceSource = "ETF";
-
-    if (msData?.xau) {
-      priceSource = "MetalSentinel";
-      xauQuote = msData.xau; xauPrice = msData.xau.c;
-      if (msData.xag) { xagQuote = msData.xag; xagPrice = msData.xag.c; }
-      if (msData.usdtry) prices.usdtry = msData.usdtry;
-      if (gld?.c && xauPrice) dynamicGLDRatio = xauPrice / gld.c;
-      if (slv?.c && xagPrice) dynamicSLVRatio = xagPrice / slv.c;
-    } else if (freeData?.xau) {
-      priceSource = freeData.source || "Kripto Borsa";
-      xauQuote = freeData.xau; xauPrice = freeData.xau.c;
-      if (freeData.xag) { xagQuote = freeData.xag; xagPrice = freeData.xag.c; }
-      if (gld?.c && xauPrice) dynamicGLDRatio = xauPrice / gld.c;
-      if (slv?.c && xagPrice) dynamicSLVRatio = xagPrice / slv.c;
-    }
-
-    // GoldAPI'de XAG yoksa veya GoldAPI yok → ETF'den hesapla
     if (!xauPrice) {
-      // Dinamik katsayı: GoldAPI ile kalibre edilmişse daha doğru
       const gRatio = dynamicGLDRatio || GLD_RATIO;
       if (gld?.c && gld.c > 100) {
         xauPrice = gld.c * gRatio;
         xauQuote = { c:xauPrice, o:gld.o*gRatio, h:gld.h*gRatio, l:gld.l*gRatio, pc:gld.pc*gRatio, d:gld.d*gRatio, dp:gld.dp };
+        priceSource = "ETF";
       } else if (iau?.c && iau.c > 10) {
         xauPrice = iau.c * 100;
         xauQuote = { c:xauPrice, o:iau.o*100, h:iau.h*100, l:iau.l*100, pc:iau.pc*100, d:iau.d*100, dp:iau.dp };
+        priceSource = "ETF";
       }
     }
-    // Gümüş ETF fallback — Kraken/SI1!/GoldAPI çalışmazsa SLV ETF × kalibre katsayı
     if (!xagPrice && slv?.c && slv.c > 1) {
       const sRatio = dynamicSLVRatio || SLV_RATIO;
       xagPrice = slv.c * sRatio;
       xagQuote = { c:xagPrice, o:slv.o*sRatio, h:slv.h*sRatio, l:slv.l*sRatio, pc:slv.pc*sRatio, d:slv.d*sRatio, dp:slv.dp };
     }
+
+    // ETF katsayı kalibrasyonu (doğruluk için)
+    if (gld?.c && xauPrice) dynamicGLDRatio = xauPrice / gld.c;
+    if (slv?.c && xagPrice) dynamicSLVRatio = xagPrice / slv.c;
+
 
     const utry   = fxData.try;
     const eurusd = fxData.eur;
@@ -1789,16 +1702,10 @@ async function fetchMetals() {
     prices.usdtry = utry;
     prices.eurusd = eurusd;
 
-    // Ticker band
-    if (xauQuote) setTicker("t-xau", "tc-xau", xauQuote);
-    if (xagQuote) setTicker("t-xag", "tc-xag", xagQuote);
-    setTicker("t-spy", "tc-spy", spy);
-    if (utry) setText("t-usd", num(utry));
-    if (xauPrice && utry) setText("t-xautr", fmtTL(xauPrice / 31.1035 * utry));
+    // TradingView widget ticker'ı kendi günceller
+    // Altın/Gümüş oranı kartı için ratio hesapla
     if (xauPrice && xagPrice) {
-      const ratio = xauPrice / xagPrice;
-      setText("t-ratio", ratio.toFixed(1));
-      updateRatioCard(ratio);
+      updateRatioCard(xauPrice / xagPrice);
     }
 
     // Metal kartları
@@ -1925,18 +1832,7 @@ function updateMetalCard(pfx, quote, utry) {
   }
 }
 
-function setTicker(priceId, chgId, quote) {
-  if (!quote || !quote.c) return;
-  setText(priceId, fmtPrice(quote.c));
-  if (chgId) {
-    const el = document.getElementById(chgId);
-    if (el) {
-      const up = quote.dp >= 0;
-      el.textContent = (up ? "+" : "") + num(quote.dp) + "%";
-      el.className = "t-chg " + (up ? "t-up" : "t-dn");
-    }
-  }
-}
+// setTicker kaldırıldı — TradingView widget kullanılıyor
 
 function updateRatioCard(ratio) {
   setText("ratio-num", ratio.toFixed(2));
@@ -2755,15 +2651,10 @@ function updateForecasts(gldMetrics,slvMetrics){
 
 // ── INIT ─────────────────────────────────────────
 async function initData() {
-  if (!FinnhubAPI.hasKey() && !getMSKey()) {
-    const note = document.getElementById("data-source-note");
-    if (note) note.textContent = "⚠️ Lütfen bir API anahtarı girin (Finnhub veya Metal Sentinel)";
-    return;
-  }
-  const note = document.getElementById("data-source-note");
-  if (note) note.textContent = "Veriler çekiliyor…";
+  const status = document.getElementById("data-status");
+  if (status) status.textContent = "⏳ Veriler yükleniyor…";
   await fetchMetals();
-  if (getMSKey()) fetchMetalSentinelHistory(); // Teknik analiz için geçmiş
+  fetchMetalSentinelHistory(); // Teknik analiz geçmişi (async, beklemez)
   loadMetalNews();
   updatePortfolio();
 }
