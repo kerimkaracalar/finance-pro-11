@@ -254,7 +254,23 @@ header {
 .chip.chip-silver { border-color: rgba(168,189,212,.2); color: var(--silver); }
 .chip.chip-silver:hover { background: rgba(168,189,212,.06); }
 
-/* === ANALYSIS CARDS === */
+/* === TradingView Widget Overrides === */
+.tradingview-widget-copyright {
+  font-size: 11px !important;
+  color: var(--dim) !important;
+  padding: 4px 14px 10px !important;
+}
+.tradingview-widget-copyright a,
+.tradingview-widget-copyright .blue-text { color: var(--muted) !important; }
+
+@media (max-width: 720px) {
+  /* widget grid 2col → 1col on mobile */
+  div[style*="grid-template-columns:1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+
 .card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow); margin-bottom: 18px; }
 .card h2 { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 16px; font-weight: 700; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
@@ -571,6 +587,93 @@ footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 3
       </div>
     </div>
 
+    <!-- TradingView Widget Grid — Altın -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:22px">
+
+      <!-- Mini Chart — XAU/USD -->
+      <div style="background:var(--panel);border:1px solid rgba(232,169,48,.2);border-radius:14px;overflow:hidden">
+        <div style="padding:14px 18px 10px;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--gold);font-weight:700">📉 Mini Grafik · XAU/USD</div>
+        <div class="tradingview-widget-container" style="height:220px">
+          <div class="tradingview-widget-container__widget" style="height:100%"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+          {
+            "symbol": "OANDA:XAUUSD",
+            "width": "100%",
+            "height": 220,
+            "locale": "tr",
+            "dateRange": "3M",
+            "colorTheme": "dark",
+            "isTransparent": true,
+            "autosize": true,
+            "largeChartUrl": "",
+            "noTimeScale": false
+          }
+          </script>
+        </div>
+      </div>
+
+      <!-- Symbol Overview — XAU/USD -->
+      <div style="background:var(--panel);border:1px solid rgba(232,169,48,.2);border-radius:14px;overflow:hidden">
+        <div style="padding:14px 18px 10px;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--gold);font-weight:700">📊 Fiyat Özeti · XAU/USD</div>
+        <div class="tradingview-widget-container" style="height:220px">
+          <div class="tradingview-widget-container__widget" style="height:100%"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-symbol-overview.js" async>
+          {
+            "symbols": [["OANDA:XAUUSD|3M"]],
+            "chartOnly": false,
+            "width": "100%",
+            "height": 220,
+            "locale": "tr",
+            "colorTheme": "dark",
+            "autosize": true,
+            "showVolume": false,
+            "showMA": true,
+            "hideDateRanges": false,
+            "hideMarketStatus": false,
+            "hideSymbolLogo": false,
+            "scalePosition": "right",
+            "scaleMode": "Normal",
+            "fontFamily": "-apple-system, BlinkMacSystemFont, Trebuchet MS, Roboto, Ubuntu, sans-serif",
+            "fontSize": "10",
+            "noTimeScale": false,
+            "valuesTracking": "1",
+            "changeMode": "price-and-percent",
+            "chartType": "area",
+            "maLineColor": "#2962FF",
+            "maLineWidth": 1,
+            "maLength": 9,
+            "headerFontSize": "medium",
+            "lineWidth": 2,
+            "lineType": 0,
+            "dateRanges": ["1d|1","1m|30","3m|60","12m|1D","60m|1W","all|1M"],
+            "isTransparent": true
+          }
+          </script>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top Stories / Haberler — XAUUSD -->
+    <div style="background:var(--panel);border:1px solid rgba(232,169,48,.15);border-radius:14px;overflow:hidden;margin-bottom:22px">
+      <div style="padding:14px 18px 10px;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--gold);font-weight:700">📰 Güncel Altın Haberleri · TradingView</div>
+      <div class="tradingview-widget-container" style="height:420px">
+        <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
+        <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/XAUUSD/" rel="noopener nofollow" target="_blank"><span class="blue-text">XAUUSD haberleri</span></a><span> by TradingView</span></div>
+        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-timeline.js" async>
+        {
+          "feedMode": "symbol",
+          "symbol": "OANDA:XAUUSD",
+          "isTransparent": true,
+          "displayMode": "adaptive",
+          "width": "100%",
+          "height": 420,
+          "locale": "tr",
+          "colorTheme": "dark"
+        }
+        </script>
+      </div>
+    </div>
+
     <div class="card" id="goldNewsCard">
       <h2>Son Altın Haberleri</h2>
       <div class="loading"><div class="spinner"></div>Haberler yükleniyor…</div>
@@ -647,6 +750,93 @@ footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 3
           <div style="font-size:14px;font-weight:600">~15% kullanım</div>
           <div style="font-size:12px;color:var(--muted);margin-top:4px">Takı, sofra gereçleri</div>
         </div>
+      </div>
+    </div>
+
+    <!-- TradingView Widget Grid — Gümüş -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:22px">
+
+      <!-- Mini Chart — XAG/USD -->
+      <div style="background:var(--panel);border:1px solid rgba(168,189,212,.2);border-radius:14px;overflow:hidden">
+        <div style="padding:14px 18px 10px;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--silver-l);font-weight:700">📉 Mini Grafik · XAG/USD</div>
+        <div class="tradingview-widget-container" style="height:220px">
+          <div class="tradingview-widget-container__widget" style="height:100%"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+          {
+            "symbol": "TVC:SILVER",
+            "width": "100%",
+            "height": 220,
+            "locale": "tr",
+            "dateRange": "3M",
+            "colorTheme": "dark",
+            "isTransparent": true,
+            "autosize": true,
+            "largeChartUrl": "",
+            "noTimeScale": false
+          }
+          </script>
+        </div>
+      </div>
+
+      <!-- Symbol Overview — XAG/USD -->
+      <div style="background:var(--panel);border:1px solid rgba(168,189,212,.2);border-radius:14px;overflow:hidden">
+        <div style="padding:14px 18px 10px;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--silver-l);font-weight:700">📊 Fiyat Özeti · XAG/USD</div>
+        <div class="tradingview-widget-container" style="height:220px">
+          <div class="tradingview-widget-container__widget" style="height:100%"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-symbol-overview.js" async>
+          {
+            "symbols": [["TVC:SILVER|3M"]],
+            "chartOnly": false,
+            "width": "100%",
+            "height": 220,
+            "locale": "tr",
+            "colorTheme": "dark",
+            "autosize": true,
+            "showVolume": false,
+            "showMA": true,
+            "hideDateRanges": false,
+            "hideMarketStatus": false,
+            "hideSymbolLogo": false,
+            "scalePosition": "right",
+            "scaleMode": "Normal",
+            "fontFamily": "-apple-system, BlinkMacSystemFont, Trebuchet MS, Roboto, Ubuntu, sans-serif",
+            "fontSize": "10",
+            "noTimeScale": false,
+            "valuesTracking": "1",
+            "changeMode": "price-and-percent",
+            "chartType": "area",
+            "maLineColor": "#a8bdd4",
+            "maLineWidth": 1,
+            "maLength": 9,
+            "headerFontSize": "medium",
+            "lineWidth": 2,
+            "lineType": 0,
+            "dateRanges": ["1d|1","1m|30","3m|60","12m|1D","60m|1W","all|1M"],
+            "isTransparent": true
+          }
+          </script>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top Stories / Haberler — Silver -->
+    <div style="background:var(--panel);border:1px solid rgba(168,189,212,.15);border-radius:14px;overflow:hidden;margin-bottom:22px">
+      <div style="padding:14px 18px 10px;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--silver-l);font-weight:700">📰 Güncel Gümüş Haberleri · TradingView</div>
+      <div class="tradingview-widget-container" style="height:420px">
+        <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
+        <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/TVC-SILVER/" rel="noopener nofollow" target="_blank"><span class="blue-text">SILVER haberleri</span></a><span> by TradingView</span></div>
+        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-timeline.js" async>
+        {
+          "feedMode": "symbol",
+          "symbol": "TVC:SILVER",
+          "isTransparent": true,
+          "displayMode": "adaptive",
+          "width": "100%",
+          "height": 420,
+          "locale": "tr",
+          "colorTheme": "dark"
+        }
+        </script>
       </div>
     </div>
 
@@ -781,6 +971,80 @@ footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 3
       </div>
     </div>
     <div class="disclaimer" style="margin-top:16px">⚠️ Tüm öngörüler teknik göstergeler ve kural tabanlı modellerden otomatik üretilmektedir. Yatırım tavsiyesi değildir.</div>
+
+    <!-- ── TradingView Teknik Analiz Widgetları ── -->
+    <div style="margin-top:28px">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:700;margin-bottom:14px">📐 TradingView · Teknik Analiz (Alım / Satım Sinyalleri)</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:22px">
+
+        <!-- Teknik Analiz — XAU/USD -->
+        <div style="background:var(--panel);border:1px solid rgba(232,169,48,.2);border-radius:14px;overflow:hidden">
+          <div style="padding:14px 18px 10px;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--gold);font-weight:700">🥇 Teknik Analiz · XAU/USD</div>
+          <div class="tradingview-widget-container">
+            <div class="tradingview-widget-container__widget"></div>
+            <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/XAUUSD/?exchange=OANDA" rel="noopener nofollow" target="_blank"><span class="blue-text">XAUUSD analiz</span></a> by TradingView</div>
+            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>
+            {
+              "colorTheme": "dark",
+              "displayMode": "single",
+              "isTransparent": true,
+              "locale": "tr",
+              "interval": "1D",
+              "disableInterval": false,
+              "width": "100%",
+              "height": 450,
+              "symbol": "OANDA:XAUUSD",
+              "showIntervalTabs": true
+            }
+            </script>
+          </div>
+        </div>
+
+        <!-- Teknik Analiz — XAG/USD (SILVER) -->
+        <div style="background:var(--panel);border:1px solid rgba(168,189,212,.2);border-radius:14px;overflow:hidden">
+          <div style="padding:14px 18px 10px;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--silver-l);font-weight:700">🥈 Teknik Analiz · XAG/USD</div>
+          <div class="tradingview-widget-container">
+            <div class="tradingview-widget-container__widget"></div>
+            <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/SILVER/?exchange=TVC" rel="noopener nofollow" target="_blank"><span class="blue-text">SILVER analiz</span></a> by TradingView</div>
+            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>
+            {
+              "colorTheme": "dark",
+              "displayMode": "single",
+              "isTransparent": true,
+              "locale": "tr",
+              "interval": "1D",
+              "disableInterval": false,
+              "width": "100%",
+              "height": 450,
+              "symbol": "TVC:SILVER",
+              "showIntervalTabs": true
+            }
+            </script>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Ekonomik Takvim ── -->
+    <div style="background:var(--panel);border:1px solid var(--border-2);border-radius:14px;overflow:hidden;margin-top:8px;margin-bottom:22px">
+      <div style="padding:14px 18px 10px;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--accent);font-weight:700">📅 Ekonomik Takvim · Piyasayı Etkileyen Olaylar</div>
+      <div class="tradingview-widget-container" style="height:500px">
+        <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
+        <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/economic-calendar/" rel="noopener nofollow" target="_blank"><span class="blue-text">Ekonomik Takvim</span></a> by TradingView</div>
+        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-events.js" async>
+        {
+          "colorTheme": "dark",
+          "isTransparent": true,
+          "width": "100%",
+          "height": 500,
+          "locale": "tr",
+          "importanceFilter": "0,1",
+          "countryFilter": "us,eu,cn,tr,gb,jp,de"
+        }
+        </script>
+      </div>
+    </div>
+
   </div>
 
   <!-- ============================================================
