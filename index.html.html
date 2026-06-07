@@ -1511,22 +1511,28 @@ async function fetchMetalSentinel() {
 
   try {
     // 3 isteği paralel at — hepsi aynı rate limit altında
+    // Endpoint'ler: /spot?metal=AU&currency=USD (Kitco kaynaklı spot fiyat)
+    // /fx?base=USD&quote=TRY (döviz)
+    // /history?metal=AU&currency=USD&limit=30 (geçmiş)
     const [auRaw, agRaw, fxRaw] = await Promise.all([
-      msRequest("/api/metal-quote?symbol=AU&currency=USD").catch(e => { console.warn("MS gold:", e.message); return null; }),
-      msRequest("/api/metal-quote?symbol=AG&currency=USD").catch(e => { console.warn("MS silver:", e.message); return null; }),
-      msRequest("/api/forex-quote?symbol=USD&currency=TRY").catch(e => { console.warn("MS forex:", e.message); return null; }),
+      msRequest("/spot?metal=AU&currency=USD").catch(e => { console.warn("MS gold:", e.message); return null; }),
+      msRequest("/spot?metal=AG&currency=USD").catch(e => { console.warn("MS silver:", e.message); return null; }),
+      msRequest("/fx?base=USD&quote=TRY").catch(e => { console.warn("MS forex:", e.message); return null; }),
     ]);
 
-    console.log("MS raw gold:", JSON.stringify(auRaw).slice(0, 200));
-    console.log("MS raw silver:", JSON.stringify(agRaw).slice(0, 200));
+    console.log("MS raw gold:", JSON.stringify(auRaw).slice(0, 300));
+    console.log("MS raw silver:", JSON.stringify(agRaw).slice(0, 300));
+    console.log("MS raw fx:", JSON.stringify(fxRaw).slice(0, 200));
 
     const xauQ = msParseQuote(auRaw);
     const xagQ = msParseQuote(agRaw);
     if (!xauQ) { console.warn("MS: altın parse edilemedi"); return msCache.xau ? msCache : null; }
 
-    // forex-quote?symbol=USD&currency=TRY → USD başına TRY = doğrudan USD/TRY
-    const fxR = fxRaw?.results?.[0];
-    const usdtry = fxR?.price ? parseFloat(fxR.price) : null;
+    // /fx response: { rate: 38.5 } veya { results:[{price:38.5}] }
+    const usdtry = fxRaw?.rate ? parseFloat(fxRaw.rate)
+                 : fxRaw?.results?.[0]?.price ? parseFloat(fxRaw.results[0].price)
+                 : fxRaw?.price ? parseFloat(fxRaw.price)
+                 : null;
 
     msCache.xau      = xauQ;
     msCache.xag      = xagQ;
@@ -1560,8 +1566,8 @@ async function fetchMetalSentinelHistory() {
 
   try {
     const [auHist, agHist] = await Promise.all([
-      msRequest("/api/metal-history?symbol=AU&currency=USD&startTime=" + from + "&endTime=" + now + "&limit=30").catch(() => null),
-      msRequest("/api/metal-history?symbol=AG&currency=USD&startTime=" + from + "&endTime=" + now + "&limit=30").catch(() => null),
+      msRequest("/history?metal=AU&currency=USD&limit=30").catch(() => null),
+      msRequest("/history?metal=AG&currency=USD&limit=30").catch(() => null),
     ]);
 
     if (auHist?.results?.length > 5) {
