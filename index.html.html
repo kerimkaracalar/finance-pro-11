@@ -877,14 +877,14 @@ footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 3
         <div class="tv-ta-title" style="color:var(--silver-l)">⚙️ Teknik Analiz Özeti · XAG/USD</div>
         <div class="tradingview-widget-container" style="height:420px;width:100%">
           <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
-          <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/OANDA-XAGUSD/technicals/" rel="noopener nofollow" target="_blank"><span class="blue-text">XAGUSD technical analysis</span></a><span> by TradingView</span></div>
+          <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/TVC-SILVER/technicals/" rel="noopener nofollow" target="_blank"><span class="blue-text">SILVER technical analysis</span></a><span> by TradingView</span></div>
           <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>
           {
             "interval": "1D",
             "width": "100%",
             "isTransparent": true,
             "height": 420,
-            "symbol": "OANDA:XAGUSD",
+            "symbol": "TVC:SILVER",
             "showIntervalTabs": true,
             "displayMode": "multiple",
             "locale": "tr",
@@ -897,14 +897,14 @@ footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 3
         <div class="tv-ta-title" style="color:var(--silver-l)">📌 Tek Gösterge · XAG/USD</div>
         <div class="tradingview-widget-container" style="height:420px;width:100%">
           <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
-          <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/OANDA-XAGUSD/technicals/" rel="noopener nofollow" target="_blank"><span class="blue-text">XAGUSD rating</span></a><span> by TradingView</span></div>
+          <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/TVC-SILVER/technicals/" rel="noopener nofollow" target="_blank"><span class="blue-text">SILVER rating</span></a><span> by TradingView</span></div>
           <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>
           {
             "interval": "1h",
             "width": "100%",
             "isTransparent": true,
             "height": 420,
-            "symbol": "OANDA:XAGUSD",
+            "symbol": "TVC:SILVER",
             "showIntervalTabs": true,
             "displayMode": "single",
             "locale": "tr",
@@ -1882,91 +1882,229 @@ async function fetchMetalSentinel() {
 // ══════════════════════════════════════════════════════════════
 const histCache = { lastFetch: 0 };
 
-async function fetchFreeHistory() {
-  // 24 saat cache; veri zaten varsa API limitini koru
-  if (histCache.lastFetch && (Date.now() - histCache.lastFetch) < 24 * 60 * 60 * 1000 && (priceHistory.xau.length || priceHistory.xag.length)) {
-    console.log("Gecmis veri cacheden");
+async function fetchFreeHistory(opts = {}) {
+  const silent = !!opts.silent;
+  const minDays = 90;
+  const cacheKey = "metal_history_v4";
+
+  const normalizeHistory = (arr) => (arr || [])
+    .map(v => Number(v))
+    .filter(v => Number.isFinite(v) && v > 0);
+
+  const rescaleToCurrent = (arr, cur) => {
+    arr = normalizeHistory(arr);
+    if (!arr.length || !cur) return arr;
+    const last = arr[arr.length - 1];
+    if (!last) return arr;
+    const factor = cur / last;
+    return arr.map(v => v * factor);
+  };
+
+  const saveHistoryCache = (source) => {
+    try {
+      localStorage.setItem(cacheKey, JSON.stringify({
+        ts: Date.now(),
+        source,
+        xau: priceHistory.xau.slice(-320),
+        xag: priceHistory.xag.slice(-320)
+      }));
+    } catch {}
+  };
+
+  const loadHistoryCache = () => {
+    try {
+      const c = JSON.parse(localStorage.getItem(cacheKey) || "null");
+      if (!c || Date.now() - c.ts > 7 * 24 * 60 * 60 * 1000) return null;
+      const xau = normalizeHistory(c.xau);
+      const xag = normalizeHistory(c.xag);
+      if (xau.length >= minDays || xag.length >= minDays) return { xau, xag, source: c.source || "Önbellek" };
+    } catch {}
+    return null;
+  };
+
+  // Geçerli cache varsa tekrar kaynakları yormadan kullan.
+  if (histCache.lastFetch && (Date.now() - histCache.lastFetch) < 24 * 60 * 60 * 1000 &&
+      priceHistory.xau.length >= minDays && priceHistory.xag.length >= minDays) {
+    if (!silent) console.log("Gecmis veri RAM cacheden");
     updateForecasts(null, null);
-    return;
+    return true;
   }
+
+  const setStatus = (txt, color = "var(--muted)") => {
+    if (silent) return;
+    const statusEl = document.getElementById("data-status");
+    if (statusEl) { statusEl.textContent = txt; statusEl.style.color = color; }
+  };
+
+  setStatus("⏳ Geçmiş veri kaynakları deneniyor…");
 
   const key = CONFIG.FINNHUB_KEY;
   const now = Math.floor(Date.now() / 1000);
-  const from = now - 400 * 24 * 3600; // 400 gun
+  const from = now - 430 * 24 * 3600;
 
   const fetchFinnhubCandle = async (symbol, ratio) => {
+    if (!key) return null;
     try {
-      const res = await fetch(`https://finnhub.io/api/v1/stock/candle?symbol=${symbol}&resolution=D&from=${from}&to=${now}&token=${key}`);
+      const res = await fetch(`https://finnhub.io/api/v1/stock/candle?symbol=${encodeURIComponent(symbol)}&resolution=D&from=${from}&to=${now}&token=${encodeURIComponent(key)}`);
       if (!res.ok) return null;
       const d = await res.json();
-      if (d.s !== "ok" || !Array.isArray(d.c) || d.c.length < 30) return null;
-      return d.c.map(p => p * ratio).filter(v => Number.isFinite(v) && v > 0);
+      if (d.s !== "ok" || !Array.isArray(d.c) || d.c.length < minDays) return null;
+      return normalizeHistory(d.c.map(p => p * ratio));
     } catch(e) {
       console.warn(`Finnhub candle ${symbol} hata:`, e.message);
       return null;
     }
   };
 
-  const fetchYahooChart = async (symbol) => {
-    // Bazı tarayıcı/hosting kombinasyonlarında CORS engeli olabilir; bu yüzden sadece yedek olarak denenir.
-    try {
-      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1y&interval=1d`;
-      const res = await fetch(url);
-      if (!res.ok) return null;
-      const d = await res.json();
-      const q = d?.chart?.result?.[0]?.indicators?.quote?.[0]?.close || [];
-      const arr = q.filter(v => Number.isFinite(v) && v > 0);
-      return arr.length >= 30 ? arr : null;
-    } catch(e) {
-      console.warn(`Yahoo chart ${symbol} hata:`, e.message);
-      return null;
+  const stooqDate = (d) => d.toISOString().slice(0,10).replace(/-/g, "");
+  const parseCSVCloses = (txt) => {
+    if (!txt || /No data|Brak danych/i.test(txt)) return null;
+    const lines = txt.trim().split(/\r?\n/).filter(Boolean);
+    const closes = [];
+    for (const line of lines.slice(1)) {
+      const parts = line.split(',');
+      const close = Number(parts[4]);
+      if (Number.isFinite(close) && close > 0) closes.push(close);
     }
+    return closes.length >= minDays ? closes : null;
+  };
+
+  const fetchTextAny = async (url) => {
+    const urls = [
+      url,
+      `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+      `https://corsproxy.io/?${encodeURIComponent(url)}`
+    ];
+    for (const u of urls) {
+      try {
+        const r = await fetch(u, { cache: "no-store" });
+        if (!r.ok) continue;
+        const txt = await r.text();
+        if (txt && txt.length > 20) return txt;
+      } catch(e) {
+        console.warn("CSV kaynak hatası:", e.message);
+      }
+    }
+    return null;
+  };
+
+  const fetchStooq = async (symbols) => {
+    const d2 = new Date();
+    const d1 = new Date(Date.now() - 430 * 24 * 3600 * 1000);
+    for (const sym of symbols) {
+      const url = `https://stooq.com/q/d/l/?s=${encodeURIComponent(sym)}&d1=${stooqDate(d1)}&d2=${stooqDate(d2)}&i=d`;
+      const txt = await fetchTextAny(url);
+      const arr = parseCSVCloses(txt || "");
+      if (arr) return arr;
+    }
+    return null;
+  };
+
+  const fetchYahooChart = async (symbols) => {
+    for (const symbol of symbols) {
+      try {
+        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=18mo&interval=1d`;
+        const txt = await fetchTextAny(url);
+        if (!txt) continue;
+        const d = JSON.parse(txt);
+        const q = d?.chart?.result?.[0]?.indicators?.quote?.[0]?.close || [];
+        const arr = normalizeHistory(q);
+        if (arr.length >= minDays) return arr;
+      } catch(e) {
+        console.warn(`Yahoo chart ${symbol} hata:`, e.message);
+      }
+    }
+    return null;
   };
 
   try {
-    console.log("Gecmis veri cekiliyor...");
-    let [xauData, xagData] = await Promise.all([
+    let xauData = null;
+    let xagData = null;
+    let source = [];
+
+    // A) Finnhub GLD/SLV ETF günlük kapanışları — CORS dostu ve hızlı.
+    [xauData, xagData] = await Promise.all([
       fetchFinnhubCandle("GLD", dynamicGLDRatio || GLD_RATIO),
       fetchFinnhubCandle("SLV", dynamicSLVRatio || SLV_RATIO),
     ]);
+    if (xauData) source.push("Finnhub GLD");
+    if (xagData) source.push("Finnhub SLV");
 
-    // Finnhub candle boş dönerse doğrudan vadeli metal verisini yedek olarak dene
-    if (!xauData) xauData = await fetchYahooChart("GC=F");
-    if (!xagData) xagData = await fetchYahooChart("SI=F");
-
-    if (xauData && xauData.length > 10) {
-      priceHistory.xau = xauData;
-      console.log("XAU gecmis veri: " + xauData.length + " gun yuklendi");
+    // B) Stooq spot/futures CSV — key yok. Direkt CORS engellenirse proxy denenir.
+    if (!xauData) {
+      xauData = await fetchStooq(["xauusd", "gc.f", "gold"]);
+      if (xauData) source.push("Stooq XAU/GC");
     }
-    if (xagData && xagData.length > 10) {
-      priceHistory.xag = xagData;
-      console.log("XAG gecmis veri: " + xagData.length + " gun yuklendi");
+    if (!xagData) {
+      xagData = await fetchStooq(["xagusd", "si.f", "silver"]);
+      if (xagData) source.push("Stooq XAG/SI");
     }
 
-    // Son çare: gerçek fiyat üzerinden deterministik sentetik seri üret; teknik/öngörü ekranları boş kalmasın.
-    if (!priceHistory.xau.length && prices.xau) {
-      priceHistory.xau = syntheticHistory(prices.xau, {}, 180);
-      console.log("Sentetik XAU gecmisi uretildi");
+    // C) Yahoo futures — CORS proxy ile son yedek.
+    if (!xauData) {
+      xauData = await fetchYahooChart(["GC=F", "GLD"]);
+      if (xauData) source.push("Yahoo GC/GLD");
     }
-    if (!priceHistory.xag.length && prices.xag) {
-      priceHistory.xag = syntheticHistory(prices.xag, {}, 180);
-      console.log("Sentetik XAG gecmisi uretildi");
+    if (!xagData) {
+      xagData = await fetchYahooChart(["SI=F", "SLV"]);
+      if (xagData) source.push("Yahoo SI/SLV");
+    }
+
+    // D) Local cache — kullanıcı daha önce çalıştırdıysa tamamen boş kalmasın.
+    if (!xauData || !xagData) {
+      const cached = loadHistoryCache();
+      if (cached) {
+        if (!xauData && cached.xau.length >= minDays) { xauData = cached.xau; source.push("Cache XAU"); }
+        if (!xagData && cached.xag.length >= minDays) { xagData = cached.xag; source.push("Cache XAG"); }
+      }
+    }
+
+    if (xauData && xauData.length >= minDays) {
+      priceHistory.xau = rescaleToCurrent(xauData, prices.xau).slice(-320);
+      if (!prices.xau) prices.xau = priceHistory.xau.at(-1);
+      console.log("XAU gerçek geçmiş veri: " + priceHistory.xau.length + " gün");
+    }
+    if (xagData && xagData.length >= minDays) {
+      priceHistory.xag = rescaleToCurrent(xagData, prices.xag).slice(-320);
+      if (!prices.xag) prices.xag = priceHistory.xag.at(-1);
+      console.log("XAG gerçek geçmiş veri: " + priceHistory.xag.length + " gün");
+    }
+
+    // E) Son çare: gerçek anlık fiyat üstünden sentetik seri. Açıkça işaretlenir.
+    let syntheticUsed = false;
+    if (priceHistory.xau.length < minDays && prices.xau) {
+      priceHistory.xau = syntheticHistory(prices.xau, {}, 220);
+      syntheticUsed = true;
+      source.push("Yedek sentetik XAU");
+    }
+    if (priceHistory.xag.length < minDays && prices.xag) {
+      priceHistory.xag = syntheticHistory(prices.xag, {}, 220);
+      syntheticUsed = true;
+      source.push("Yedek sentetik XAG");
     }
 
     histCache.lastFetch = Date.now();
+    saveHistoryCache(source.join(" + ") || "Bilinmeyen kaynak");
+    updateForecasts(null, null);
 
-    if (prices.xau || prices.xag) updateForecasts(null, null);
-
-    const statusEl = document.getElementById("data-status");
-    if (statusEl) {
-      const suffix = (!xauData || !xagData) ? " · yedek seri kullanıldı" : "";
-      statusEl.textContent = `✅ Hazır · ${priceHistory.xau.length}g XAU, ${priceHistory.xag.length}g XAG${suffix}`;
-    }
+    const suffix = syntheticUsed ? " · uyarı: yedek seri" : " · gerçek günlük geçmiş";
+    setStatus(`✅ Hazır · ${priceHistory.xau.length}g XAU, ${priceHistory.xag.length}g XAG${suffix}`, syntheticUsed ? "var(--yellow)" : "var(--green)");
+    return !!(priceHistory.xau.length || priceHistory.xag.length);
   } catch(e) {
     console.warn("fetchFreeHistory hata:", e.message);
-    if (!priceHistory.xau.length && prices.xau) priceHistory.xau = syntheticHistory(prices.xau, {}, 180);
-    if (!priceHistory.xag.length && prices.xag) priceHistory.xag = syntheticHistory(prices.xag, {}, 180);
-    if (prices.xau || prices.xag) updateForecasts(null, null);
+    const cached = loadHistoryCache();
+    if (cached) {
+      priceHistory.xau = cached.xau;
+      priceHistory.xag = cached.xag;
+      updateForecasts(null, null);
+      setStatus(`⚠ Geçmiş veri cache'den · ${priceHistory.xau.length}g XAU, ${priceHistory.xag.length}g XAG`, "var(--yellow)");
+      return true;
+    }
+    if (prices.xau) priceHistory.xau = syntheticHistory(prices.xau, {}, 220);
+    if (prices.xag) priceHistory.xag = syntheticHistory(prices.xag, {}, 220);
+    updateForecasts(null, null);
+    setStatus("⚠ Gerçek geçmiş veri alınamadı; yedek seriyle teknikler gösteriliyor", "var(--yellow)");
+    return false;
   }
 }
 
@@ -2063,99 +2201,114 @@ async function fetchMetals() {
     const key = CONFIG.FINNHUB_KEY;
     let xauPrice = null, xauQuote = null;
     let xagPrice = null, xagQuote = null;
-    let priceSource = "—";
+    const sourcesUsed = [];
 
-    // 1. GoldAPI.io — BİRİNCİL KAYNAK (3 saatlik cache, key rotasyonlu)
-    const goldData = await fetchFromGoldAPI().catch(() => null);
-    if (goldData?.xau) {
-      xauQuote = goldData.xau; xauPrice = goldData.xau.c;
-      if (goldData.xag) { xagQuote = goldData.xag; xagPrice = goldData.xag.c; }
-      priceSource = "GoldAPI";
-      console.log(`GoldAPI (cache'den): XAU=$${xauPrice?.toFixed(2)} XAG=$${xagPrice?.toFixed(3)||"—"}`);
-    }
-
-    // 2. Finnhub/ETF — YEDEK (GoldAPI başarısız olursa devreye girer)
-    if (!xauPrice) {
-      console.log("GoldAPI başarısız, Finnhub/ETF yedek kaynağına geçiliyor...");
-      const fetchQ = async (sym) => {
-        const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${sym}&token=${key}`);
+    const validQuote = q => q && Number.isFinite(Number(q.c)) && Number(q.c) > 0;
+    const fetchQ = async (sym) => {
+      if (!key) return null;
+      try {
+        const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(sym)}&token=${encodeURIComponent(key)}`);
         if (!r.ok) return null;
         const d = await r.json();
-        return (d && d.c > 0) ? d : null;
-      };
+        return (d && Number(d.c) > 0) ? d : null;
+      } catch(e) {
+        console.warn(`Finnhub quote ${sym} hata:`, e.message);
+        return null;
+      }
+    };
 
+    // 1) GoldAPI — spot XAU/XAG. XAG boş gelirse aşağıdaki ETF yedeği ayrıca denenir.
+    const goldData = await fetchFromGoldAPI().catch(e => {
+      console.warn("GoldAPI kaynak hatası:", e.message);
+      return null;
+    });
+    if (validQuote(goldData?.xau)) {
+      xauQuote = goldData.xau;
+      xauPrice = Number(goldData.xau.c);
+      sourcesUsed.push("GoldAPI XAU");
+    }
+    if (validQuote(goldData?.xag)) {
+      xagQuote = goldData.xag;
+      xagPrice = Number(goldData.xag.c);
+      sourcesUsed.push("GoldAPI XAG");
+    }
+
+    // 2) Finnhub ETF yedeği — altın veya gümüşten herhangi biri eksikse devreye girer.
+    if (!xauPrice || !xagPrice) {
+      console.log("Eksik metal fiyatı için Finnhub ETF yedeği deneniyor...");
       const [gld, slv, iau] = await Promise.all([
-        fetchQ("GLD").catch(() => null),
-        fetchQ("SLV").catch(() => null),
-        fetchQ("IAU").catch(() => null),
+        fetchQ("GLD"),
+        fetchQ("SLV"),
+        fetchQ("IAU"),
       ]);
 
-      if (gld && gld.c > 100) {
-        const ratio = dynamicGLDRatio || GLD_RATIO;
-        xauPrice = gld.c * ratio;
-        xauQuote = { c: xauPrice, o: gld.o*ratio, h: gld.h*ratio, l: gld.l*ratio, pc: gld.pc*ratio, d: gld.d*ratio, dp: gld.dp };
-        priceSource = "Finnhub/GLD";
-      } else if (iau && iau.c > 10) {
-        xauPrice = iau.c * 100;
-        xauQuote = { c: xauPrice, o: iau.o*100, h: iau.h*100, l: iau.l*100, pc: iau.pc*100, d: iau.d*100, dp: iau.dp };
-        priceSource = "Finnhub/IAU";
+      if (!xauPrice) {
+        if (gld && gld.c > 100) {
+          const ratio = dynamicGLDRatio || GLD_RATIO;
+          xauPrice = gld.c * ratio;
+          xauQuote = { c: xauPrice, o: gld.o*ratio, h: gld.h*ratio, l: gld.l*ratio, pc: gld.pc*ratio, d: gld.d*ratio, dp: gld.dp };
+          sourcesUsed.push("Finnhub GLD→XAU");
+        } else if (iau && iau.c > 10) {
+          xauPrice = iau.c * 100;
+          xauQuote = { c: xauPrice, o: iau.o*100, h: iau.h*100, l: iau.l*100, pc: iau.pc*100, d: iau.d*100, dp: iau.dp };
+          sourcesUsed.push("Finnhub IAU→XAU");
+        }
       }
 
-      if (slv && slv.c > 1) {
+      if (!xagPrice && slv && slv.c > 1) {
         const ratio = dynamicSLVRatio || SLV_RATIO;
         xagPrice = slv.c * ratio;
         xagQuote = { c: xagPrice, o: slv.o*ratio, h: slv.h*ratio, l: slv.l*ratio, pc: slv.pc*ratio, d: slv.d*ratio, dp: slv.dp };
+        sourcesUsed.push("Finnhub SLV→XAG");
       }
 
-      // ETF katsayi kalibrasyonu
+      // Spot/ETF eşleşmesi varsa katsayıları yeniden kalibre et.
       if (gld?.c && xauPrice) dynamicGLDRatio = xauPrice / gld.c;
       if (slv?.c && xagPrice) dynamicSLVRatio = xagPrice / slv.c;
     }
 
-    // 3. USD/TRY + EUR/USD — public API
-    let fxData = { try: null, eur: null };
-    try {
-      const fxRes = await fetch("https://api.exchangerate-api.com/v4/latest/USD");
-      if (fxRes.ok) {
-        const fxJson = await fxRes.json();
-        fxData = { try: fxJson.rates?.TRY, eur: fxJson.rates?.EUR ? 1/fxJson.rates.EUR : null };
-      }
-    } catch {}
-    if (!fxData.try) {
-      try {
-        const fxRes2 = await fetch("https://open.er-api.com/v6/latest/USD");
-        if (fxRes2.ok) {
-          const fxJson2 = await fxRes2.json();
-          fxData = { try: fxJson2.rates?.TRY, eur: fxJson2.rates?.EUR ? 1/fxJson2.rates.EUR : null };
-        }
-      } catch {}
+    // 3) Son fiyat da yoksa geçmiş verinin son kapanışından fiyat çıkar.
+    if ((!xauPrice || !xagPrice) && (!priceHistory.xau.length || !priceHistory.xag.length)) {
+      await fetchFreeHistory({ silent: true });
     }
+    if (!xauPrice && priceHistory.xau.length) {
+      xauPrice = priceHistory.xau[priceHistory.xau.length - 1];
+      xauQuote = makeQuote(xauPrice, priceHistory.xau[priceHistory.xau.length - 2] || xauPrice, xauPrice, xauPrice);
+      sourcesUsed.push("Geçmiş son XAU");
+    }
+    if (!xagPrice && priceHistory.xag.length) {
+      xagPrice = priceHistory.xag[priceHistory.xag.length - 1];
+      xagQuote = makeQuote(xagPrice, priceHistory.xag[priceHistory.xag.length - 2] || xagPrice, xagPrice, xagPrice);
+      sourcesUsed.push("Geçmiş son XAG");
+    }
+
+    // 4) USD/TRY + EUR/USD — public API
+    const fxData = await fetchPublicFX();
 
     if (!xauPrice && !xagPrice) {
       console.warn("fetchMetals: hic bir kaynaktan fiyat alinamadi");
       const srcEl = document.getElementById("price-source-badge");
-      if (srcEl) { srcEl.textContent = "⚠ Veri alinamiyor — API key kontrol edin"; srcEl.style.color = "var(--red)"; }
+      if (srcEl) { srcEl.textContent = "⚠ Fiyat alınamadı — API/CORS kontrol edin"; srcEl.style.color = "var(--red)"; }
       return;
     }
 
-    // State guncelle
     prices.xau    = xauPrice;
     prices.xag    = xagPrice;
     prices.usdtry = fxData.try;
     prices.eurusd = fxData.eur;
 
-    // UI guncelle
     const srcEl = document.getElementById("price-source-badge");
     if (srcEl) {
       const nextFetch = goldApiCache.lastFetch
         ? " · Sonraki: " + new Date(goldApiCache.lastFetch + GOLDAPI_CACHE_MS).toLocaleTimeString("tr-TR")
         : "";
-      srcEl.textContent = "✅ " + priceSource + (xagPrice ? "" : " · Gümüş: —") + " · " + new Date().toLocaleTimeString("tr-TR") + nextFetch;
-      srcEl.style.color = xagPrice ? "var(--green)" : "var(--yellow)";
+      const srcText = sourcesUsed.length ? sourcesUsed.join(" + ") : "Yedek kaynak";
+      srcEl.textContent = "✅ " + srcText + " · " + new Date().toLocaleTimeString("tr-TR") + nextFetch;
+      srcEl.style.color = (xauPrice && xagPrice) ? "var(--green)" : "var(--yellow)";
     }
 
-    updateMetalCard("xau", xauQuote, fxData.try);
-    updateMetalCard("xag", xagQuote, fxData.try);
+    if (xauQuote) updateMetalCard("xau", xauQuote, fxData.try);
+    if (xagQuote) updateMetalCard("xag", xagQuote, fxData.try);
     if (xauPrice && xagPrice) updateRatioCard(xauPrice / xagPrice);
 
     if (xauPrice) recordPrice("xau", xauPrice);
@@ -2169,17 +2322,18 @@ async function fetchMetals() {
     setText("ref-usd", fxData.try ? num(fxData.try) : "—");
 
     const note = document.getElementById("data-source-note");
-    if (note) note.textContent = priceSource + " · " + new Date().toLocaleTimeString("tr-TR") + " güncellendi";
+    if (note) note.textContent = (sourcesUsed.join(" + ") || "Yedek kaynak") + " · " + new Date().toLocaleTimeString("tr-TR") + " güncellendi";
 
-    // Gecmis veri yoksa hemen cek
-    if (!priceHistory.xau.length || !priceHistory.xag.length) {
+    // Geçmiş veriyi her iki metal için de garanti etmeye çalış.
+    if (priceHistory.xau.length < 60 || priceHistory.xag.length < 60) {
       await fetchFreeHistory();
-    } else {
-      fetchMetalMetrics();
     }
+    await fetchMetalMetrics();
 
   } catch(e) {
     console.warn("fetchMetals error:", e);
+    const srcEl = document.getElementById("price-source-badge");
+    if (srcEl) { srcEl.textContent = "⚠ Veri akışı hatası: " + e.message; srcEl.style.color = "var(--red)"; }
   }
 }
 
@@ -3045,6 +3199,11 @@ async function runAIAnalysis(){
   if(btn)   btn.textContent = "⏳ Analiz yapılıyor…";
   if(panel) panel.style.display = "block";
   if(output)output.innerHTML = `<div class="loading"><div class="spinner"></div>Veriler işleniyor…</div>`;
+
+  if ((prices.xau && priceHistory.xau.length < 60) || (prices.xag && priceHistory.xag.length < 60)) {
+    if (output) output.innerHTML = `<div class="loading"><div class="spinner"></div>Geçmiş veri tamamlanıyor…</div>`;
+    await fetchFreeHistory();
+  }
 
   const xauFc   = prices.xau ? buildForecast("xau", prices.xau, null) : null;
   const xagFc   = prices.xag ? buildForecast("xag", prices.xag, null) : null;
