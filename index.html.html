@@ -254,6 +254,12 @@ header {
 .chip.chip-silver { border-color: rgba(168,189,212,.2); color: var(--silver); }
 .chip.chip-silver:hover { background: rgba(168,189,212,.06); }
 
+
+.tv-ta-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:22px; }
+.tv-ta-card { background:var(--panel); border:1px solid var(--border); border-radius:14px; overflow:hidden; min-height:460px; }
+.tv-ta-title { padding:14px 18px 10px; font-size:11px; text-transform:uppercase; letter-spacing:1px; font-weight:700; }
+@media (max-width:720px){ .tv-ta-grid { grid-template-columns:1fr; } }
+
 /* === TradingView Widget Overrides === */
 .tradingview-widget-copyright {
   font-size: 11px !important;
@@ -653,6 +659,51 @@ footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 3
       </div>
     </div>
 
+
+    <!-- TradingView Technical Analysis — Altın -->
+    <div class="tv-ta-grid">
+      <div class="tv-ta-card" style="border-color:rgba(232,169,48,.2)">
+        <div class="tv-ta-title" style="color:var(--gold)">⚙️ Teknik Analiz Özeti · XAU/USD</div>
+        <div class="tradingview-widget-container" style="height:420px;width:100%">
+          <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
+          <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/OANDA-XAUUSD/technicals/" rel="noopener nofollow" target="_blank"><span class="blue-text">XAUUSD technical analysis</span></a><span> by TradingView</span></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>
+          {
+            "interval": "1D",
+            "width": "100%",
+            "isTransparent": true,
+            "height": 420,
+            "symbol": "OANDA:XAUUSD",
+            "showIntervalTabs": true,
+            "displayMode": "multiple",
+            "locale": "tr",
+            "colorTheme": "dark"
+          }
+          </script>
+        </div>
+      </div>
+      <div class="tv-ta-card" style="border-color:rgba(232,169,48,.2)">
+        <div class="tv-ta-title" style="color:var(--gold)">📌 Tek Gösterge · XAU/USD</div>
+        <div class="tradingview-widget-container" style="height:420px;width:100%">
+          <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
+          <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/OANDA-XAUUSD/technicals/" rel="noopener nofollow" target="_blank"><span class="blue-text">XAUUSD rating</span></a><span> by TradingView</span></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>
+          {
+            "interval": "1h",
+            "width": "100%",
+            "isTransparent": true,
+            "height": 420,
+            "symbol": "OANDA:XAUUSD",
+            "showIntervalTabs": true,
+            "displayMode": "single",
+            "locale": "tr",
+            "colorTheme": "dark"
+          }
+          </script>
+        </div>
+      </div>
+    </div>
+
     <!-- Top Stories / Haberler — XAUUSD -->
     <div style="background:var(--panel);border:1px solid rgba(232,169,48,.15);border-radius:14px;overflow:hidden;margin-bottom:22px">
       <div style="padding:14px 18px 10px;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--gold);font-weight:700">📰 Güncel Altın Haberleri · TradingView</div>
@@ -813,6 +864,51 @@ footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 3
             "lineType": 0,
             "dateRanges": ["1d|1","1m|30","3m|60","12m|1D","60m|1W","all|1M"],
             "isTransparent": true
+          }
+          </script>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- TradingView Technical Analysis — Gümüş -->
+    <div class="tv-ta-grid">
+      <div class="tv-ta-card" style="border-color:rgba(168,189,212,.2)">
+        <div class="tv-ta-title" style="color:var(--silver-l)">⚙️ Teknik Analiz Özeti · XAG/USD</div>
+        <div class="tradingview-widget-container" style="height:420px;width:100%">
+          <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
+          <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/OANDA-XAGUSD/technicals/" rel="noopener nofollow" target="_blank"><span class="blue-text">XAGUSD technical analysis</span></a><span> by TradingView</span></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>
+          {
+            "interval": "1D",
+            "width": "100%",
+            "isTransparent": true,
+            "height": 420,
+            "symbol": "OANDA:XAGUSD",
+            "showIntervalTabs": true,
+            "displayMode": "multiple",
+            "locale": "tr",
+            "colorTheme": "dark"
+          }
+          </script>
+        </div>
+      </div>
+      <div class="tv-ta-card" style="border-color:rgba(168,189,212,.2)">
+        <div class="tv-ta-title" style="color:var(--silver-l)">📌 Tek Gösterge · XAG/USD</div>
+        <div class="tradingview-widget-container" style="height:420px;width:100%">
+          <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
+          <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/OANDA-XAGUSD/technicals/" rel="noopener nofollow" target="_blank"><span class="blue-text">XAGUSD rating</span></a><span> by TradingView</span></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>
+          {
+            "interval": "1h",
+            "width": "100%",
+            "isTransparent": true,
+            "height": 420,
+            "symbol": "OANDA:XAGUSD",
+            "showIntervalTabs": true,
+            "displayMode": "single",
+            "locale": "tr",
+            "colorTheme": "dark"
           }
           </script>
         </div>
@@ -1640,7 +1736,7 @@ document.querySelectorAll(".tab").forEach(t => {
     document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
     document.querySelectorAll(".section").forEach(x => x.classList.remove("active"));
     t.classList.add("active");
-    document.getElementById("sec-" + t.dataset.tab).classList.add("active");
+    document.getElementById("sec-" + t.dataset.tab)?.classList.add("active");
   });
 });
 
@@ -1787,9 +1883,10 @@ async function fetchMetalSentinel() {
 const histCache = { lastFetch: 0 };
 
 async function fetchFreeHistory() {
-  // 24 saat cache
-  if (histCache.lastFetch && (Date.now() - histCache.lastFetch) < 24 * 60 * 60 * 1000) {
+  // 24 saat cache; veri zaten varsa API limitini koru
+  if (histCache.lastFetch && (Date.now() - histCache.lastFetch) < 24 * 60 * 60 * 1000 && (priceHistory.xau.length || priceHistory.xag.length)) {
     console.log("Gecmis veri cacheden");
+    updateForecasts(null, null);
     return;
   }
 
@@ -1797,53 +1894,78 @@ async function fetchFreeHistory() {
   const now = Math.floor(Date.now() / 1000);
   const from = now - 400 * 24 * 3600; // 400 gun
 
-  const fetchCandle = async (symbol, ratio) => {
+  const fetchFinnhubCandle = async (symbol, ratio) => {
     try {
       const res = await fetch(`https://finnhub.io/api/v1/stock/candle?symbol=${symbol}&resolution=D&from=${from}&to=${now}&token=${key}`);
       if (!res.ok) return null;
       const d = await res.json();
-      if (d.s !== 'ok' || !d.c || d.c.length < 10) return null;
-      return d.c.map(p => p * ratio);
+      if (d.s !== "ok" || !Array.isArray(d.c) || d.c.length < 30) return null;
+      return d.c.map(p => p * ratio).filter(v => Number.isFinite(v) && v > 0);
     } catch(e) {
-      console.warn(`Candle ${symbol} hata:`, e.message);
+      console.warn(`Finnhub candle ${symbol} hata:`, e.message);
+      return null;
+    }
+  };
+
+  const fetchYahooChart = async (symbol) => {
+    // Bazı tarayıcı/hosting kombinasyonlarında CORS engeli olabilir; bu yüzden sadece yedek olarak denenir.
+    try {
+      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1y&interval=1d`;
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      const d = await res.json();
+      const q = d?.chart?.result?.[0]?.indicators?.quote?.[0]?.close || [];
+      const arr = q.filter(v => Number.isFinite(v) && v > 0);
+      return arr.length >= 30 ? arr : null;
+    } catch(e) {
+      console.warn(`Yahoo chart ${symbol} hata:`, e.message);
       return null;
     }
   };
 
   try {
-    console.log("Finnhub candle verisi cekiliyor...");
-    const [xauData, xagData] = await Promise.all([
-      fetchCandle("GLD", dynamicGLDRatio || GLD_RATIO),
-      fetchCandle("SLV", dynamicSLVRatio || SLV_RATIO),
+    console.log("Gecmis veri cekiliyor...");
+    let [xauData, xagData] = await Promise.all([
+      fetchFinnhubCandle("GLD", dynamicGLDRatio || GLD_RATIO),
+      fetchFinnhubCandle("SLV", dynamicSLVRatio || SLV_RATIO),
     ]);
+
+    // Finnhub candle boş dönerse doğrudan vadeli metal verisini yedek olarak dene
+    if (!xauData) xauData = await fetchYahooChart("GC=F");
+    if (!xagData) xagData = await fetchYahooChart("SI=F");
 
     if (xauData && xauData.length > 10) {
       priceHistory.xau = xauData;
-      console.log("Finnhub GLD candle: " + xauData.length + " gun yuklendi");
+      console.log("XAU gecmis veri: " + xauData.length + " gun yuklendi");
     }
     if (xagData && xagData.length > 10) {
       priceHistory.xag = xagData;
-      console.log("Finnhub SLV candle: " + xagData.length + " gun yuklendi");
+      console.log("XAG gecmis veri: " + xagData.length + " gun yuklendi");
+    }
+
+    // Son çare: gerçek fiyat üzerinden deterministik sentetik seri üret; teknik/öngörü ekranları boş kalmasın.
+    if (!priceHistory.xau.length && prices.xau) {
+      priceHistory.xau = syntheticHistory(prices.xau, {}, 180);
+      console.log("Sentetik XAU gecmisi uretildi");
+    }
+    if (!priceHistory.xag.length && prices.xag) {
+      priceHistory.xag = syntheticHistory(prices.xag, {}, 180);
+      console.log("Sentetik XAG gecmisi uretildi");
     }
 
     histCache.lastFetch = Date.now();
 
-    if (xauData || xagData) {
-      updateForecasts(null, null);
-      const statusEl = document.getElementById("data-status");
-      if (statusEl) statusEl.textContent = `Hazir - ${xauData?.length||0}g XAU, ${xagData?.length||0}g XAG`;
+    if (prices.xau || prices.xag) updateForecasts(null, null);
+
+    const statusEl = document.getElementById("data-status");
+    if (statusEl) {
+      const suffix = (!xauData || !xagData) ? " · yedek seri kullanıldı" : "";
+      statusEl.textContent = `✅ Hazır · ${priceHistory.xau.length}g XAU, ${priceHistory.xag.length}g XAG${suffix}`;
     }
   } catch(e) {
     console.warn("fetchFreeHistory hata:", e.message);
-    // Fallback: sentetik gecmis
-    if (prices.xau && !priceHistory.xau.length) {
-      priceHistory.xau = syntheticHistory(prices.xau, {}, 120);
-      console.log("Sentetik XAU uretildi");
-    }
-    if (prices.xag && !priceHistory.xag.length) {
-      priceHistory.xag = syntheticHistory(prices.xag, {}, 120);
-      console.log("Sentetik XAG uretildi");
-    }
+    if (!priceHistory.xau.length && prices.xau) priceHistory.xau = syntheticHistory(prices.xau, {}, 180);
+    if (!priceHistory.xag.length && prices.xag) priceHistory.xag = syntheticHistory(prices.xag, {}, 180);
     if (prices.xau || prices.xag) updateForecasts(null, null);
   }
 }
@@ -2008,6 +2130,8 @@ async function fetchMetals() {
         }
       } catch {}
     }
+
+    if (!xauPrice && !xagPrice) {
       console.warn("fetchMetals: hic bir kaynaktan fiyat alinamadi");
       const srcEl = document.getElementById("price-source-badge");
       if (srcEl) { srcEl.textContent = "⚠ Veri alinamiyor — API key kontrol edin"; srcEl.style.color = "var(--red)"; }
@@ -2340,12 +2464,12 @@ function setText(id, val) {
 
 // ── HABERLER ─────────────────────────────────────
 async function loadMetalNews() {
-  renderMetalNews("goldNewsCard",   "Son Altin Haberleri",  null, true);
-  renderMetalNews("silverNewsCard", "Son Gumus Haberleri",  null, true);
+  renderMetalNews("goldNewsCard",   "Son Altın Haberleri",  null, true);
+  renderMetalNews("silverNewsCard", "Son Gümüş Haberleri",  null, true);
 
   const safe = fn => fn.catch(() => []);
-  const goldKw = /\bgold\b|\bxau\b|bullion|precious metal|altın|GLD|GDX|central.?bank.*gold|fed.*gold/i;
-  const silvKw = /\bsilver\b|\bxag\b|gümüş|SLV|wheaton|WPM|solar.*silver|industrial.*metal/i;
+  const goldKw = /\bgold\b|\bxau\b|bullion|precious metal|precious metals|altın|GLD|GDX|central.?bank.*gold|fed.*gold|safe.?haven/i;
+  const silvKw = /\bsilver\b|\bxag\b|gümüş|SLV|wheaton|WPM|solar.*silver|solar|industrial.*metal|precious metals/i;
 
   let goldNews = [], silvNews = [];
 
@@ -2418,8 +2542,8 @@ async function loadMetalNews() {
     } catch(e) { console.warn("RSS silver yedek hata:", e.message); }
   }
 
-  renderMetalNews("goldNewsCard",   "Son Altin Haberleri",  goldNews);
-  renderMetalNews("silverNewsCard", "Son Gumus Haberleri",  silvNews);
+  renderMetalNews("goldNewsCard",   "Son Altın Haberleri",  goldNews);
+  renderMetalNews("silverNewsCard", "Son Gümüş Haberleri",  silvNews);
 }
 
 
