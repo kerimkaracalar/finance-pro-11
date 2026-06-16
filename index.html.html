@@ -367,7 +367,20 @@ footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 3
 .ai-source-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:12px; }
 .ai-source-pill { background:var(--panel-2); border:1px solid var(--border); border-radius:8px; padding:8px 10px; font-size:11px; color:var(--muted); }
 .ai-source-pill b { color:var(--text); font-family:'DM Mono',monospace; }
-@media(max-width:720px){ .ai-source-grid { grid-template-columns:repeat(2,1fr); } }
+.ai-run-status { border:1px solid var(--border); background:var(--panel-2); border-radius:12px; padding:12px 14px; margin-bottom:14px; }
+.ai-run-top { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:8px; }
+.ai-run-badge { display:inline-flex; align-items:center; gap:6px; border-radius:999px; padding:5px 11px; font-size:12px; font-weight:800; letter-spacing:.2px; }
+.ai-run-title { font-weight:800; font-size:13px; color:var(--text); }
+.ai-run-detail { color:var(--muted); font-size:12px; line-height:1.45; }
+.ai-run-meta { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-top:10px; }
+.ai-run-meta .m { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:7px 9px; font-size:11px; color:var(--muted); }
+.ai-run-meta .m b { display:block; color:var(--text); font-family:'DM Mono',monospace; font-size:12px; margin-top:2px; }
+.ai-status-idle .ai-run-badge { background:rgba(122,138,170,.12); color:var(--muted); border:1px solid rgba(122,138,170,.25); }
+.ai-status-preparing .ai-run-badge,.ai-status-streaming .ai-run-badge { background:rgba(79,140,255,.12); color:var(--accent); border:1px solid rgba(79,140,255,.3); }
+.ai-status-ai .ai-run-badge { background:rgba(46,204,113,.14); color:var(--green); border:1px solid rgba(46,204,113,.32); }
+.ai-status-fallback .ai-run-badge { background:rgba(245,185,66,.14); color:var(--yellow); border:1px solid rgba(245,185,66,.32); }
+.ai-status-error .ai-run-badge { background:rgba(255,92,108,.14); color:var(--red); border:1px solid rgba(255,92,108,.32); }
+@media(max-width:720px){ .ai-source-grid { grid-template-columns:repeat(2,1fr); } .ai-run-meta { grid-template-columns:repeat(2,1fr); } }
 
 
 /* === ÖNGÖRÜ === */
@@ -516,7 +529,7 @@ footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 3
         {"proName":"OANDA:XAUUSD","title":"Gold"},
         {"proName":"OANDA:XAGUSD","title":"Silver"},
         {"proName":"FX_IDC:USDTRY","title":"USD/TRY"},
-        {"proName":"OANDA:XAGUSD","title":"Silver Spot"},
+        {"proName":"TVC:SILVER","title":"Silver Spot"},
         {"proName":"TVC:GOLD","title":"Gold Spot"},
         {"proName":"SP:SPX","title":"S&P 500"}
       ],
@@ -820,7 +833,7 @@ footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 3
           <div class="tradingview-widget-container__widget" style="height:100%"></div>
           <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
           {
-            "symbol": "OANDA:XAGUSD",
+            "symbol": "TVC:SILVER",
             "width": "100%",
             "height": 220,
             "locale": "tr",
@@ -842,7 +855,7 @@ footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 3
           <div class="tradingview-widget-container__widget" style="height:100%"></div>
           <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-symbol-overview.js" async>
           {
-            "symbols": [["OANDA:XAGUSD|3M"]],
+            "symbols": [["TVC:SILVER|3M"]],
             "chartOnly": false,
             "width": "100%",
             "height": 220,
@@ -883,14 +896,14 @@ footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 3
         <div class="tv-ta-title" style="color:var(--silver-l)">⚙️ Teknik Analiz Özeti · XAG/USD</div>
         <div class="tradingview-widget-container" style="height:420px;width:100%">
           <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
-          <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/OANDA-XAGUSD/technicals/" rel="noopener nofollow" target="_blank"><span class="blue-text">XAGUSD technical analysis</span></a><span> by TradingView</span></div>
+          <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/TVC-SILVER/technicals/" rel="noopener nofollow" target="_blank"><span class="blue-text">SILVER technical analysis</span></a><span> by TradingView</span></div>
           <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>
           {
             "interval": "1D",
             "width": "100%",
             "isTransparent": true,
             "height": 420,
-            "symbol": "OANDA:XAGUSD",
+            "symbol": "TVC:SILVER",
             "showIntervalTabs": true,
             "displayMode": "multiple",
             "locale": "tr",
@@ -903,14 +916,14 @@ footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 3
         <div class="tv-ta-title" style="color:var(--silver-l)">📌 Tek Gösterge · XAG/USD</div>
         <div class="tradingview-widget-container" style="height:420px;width:100%">
           <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
-          <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/OANDA-XAGUSD/technicals/" rel="noopener nofollow" target="_blank"><span class="blue-text">XAGUSD rating</span></a><span> by TradingView</span></div>
+          <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/TVC-SILVER/technicals/" rel="noopener nofollow" target="_blank"><span class="blue-text">SILVER rating</span></a><span> by TradingView</span></div>
           <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>
           {
             "interval": "1h",
             "width": "100%",
             "isTransparent": true,
             "height": 420,
-            "symbol": "OANDA:XAGUSD",
+            "symbol": "TVC:SILVER",
             "showIntervalTabs": true,
             "displayMode": "single",
             "locale": "tr",
@@ -926,11 +939,11 @@ footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 3
       <div style="padding:14px 18px 10px;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--silver-l);font-weight:700">📰 Güncel Gümüş Haberleri · TradingView</div>
       <div class="tradingview-widget-container" style="height:420px">
         <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
-        <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/OANDA-XAGUSD/" rel="noopener nofollow" target="_blank"><span class="blue-text">XAGUSD haberleri</span></a><span> by TradingView</span></div>
+        <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/TVC-SILVER/" rel="noopener nofollow" target="_blank"><span class="blue-text">SILVER haberleri</span></a><span> by TradingView</span></div>
         <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-timeline.js" async>
         {
           "feedMode": "symbol",
-          "symbol": "OANDA:XAGUSD",
+          "symbol": "TVC:SILVER",
           "isTransparent": true,
           "displayMode": "adaptive",
           "width": "100%",
@@ -974,6 +987,13 @@ footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 3
         <button onclick="saveOGApiKey()" style="background:var(--panel-3);border:1px solid var(--border-2);color:var(--text);padding:9px 14px;border-radius:9px;font-weight:700;cursor:pointer">Kaydet</button>
         <button onclick="clearOGApiKey()" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:9px 12px;border-radius:9px;cursor:pointer">Sil</button>
         <span id="ogKeyStatus" style="font-size:11px;color:var(--muted)">API key durumu kontrol ediliyor…</span>
+      </div>
+      <div id="aiRunStatus" class="ai-run-status ai-status-idle">
+        <div class="ai-run-top">
+          <span class="ai-run-badge">⏸️ Hazır</span>
+          <span class="ai-run-title">AI analizi henüz çalıştırılmadı</span>
+        </div>
+        <div class="ai-run-detail">“AI Derin Analiz” butonuna bastığında burada analizin 0G AI ile mi yoksa yerel teknik analiz yedeğiyle mi üretildiği açıkça görünecek.</div>
       </div>
       <div id="aiOutput" class="ai-output"></div>
     </div>
@@ -1113,7 +1133,7 @@ footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 3
           <div style="padding:14px 18px 10px;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--silver-l);font-weight:700">🥈 Teknik Analiz · XAG/USD</div>
           <div class="tradingview-widget-container">
             <div class="tradingview-widget-container__widget"></div>
-            <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/XAGUSD/?exchange=OANDA" rel="noopener nofollow" target="_blank"><span class="blue-text">XAGUSD analiz</span></a> by TradingView</div>
+            <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/SILVER/?exchange=TVC" rel="noopener nofollow" target="_blank"><span class="blue-text">SILVER analiz</span></a> by TradingView</div>
             <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>
             {
               "colorTheme": "dark",
@@ -1124,7 +1144,7 @@ footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 3
               "disableInterval": false,
               "width": "100%",
               "height": 450,
-              "symbol": "OANDA:XAGUSD",
+              "symbol": "TVC:SILVER",
               "showIntervalTabs": true
             }
             </script>
@@ -3291,11 +3311,11 @@ function getTradingViewWidgetContext(){
       { section:"Altın", type:"Symbol Overview", symbol:"OANDA:XAUUSD", range:"3M" },
       { section:"Altın", type:"Technical Analysis", symbol:"OANDA:XAUUSD" },
       { section:"Altın", type:"Timeline News", symbol:"OANDA:XAUUSD" },
-      { section:"Gümüş", type:"Ticker", symbol:"OANDA:XAGUSD" },
-      { section:"Gümüş", type:"Mini Symbol Overview", symbol:"OANDA:XAGUSD", range:"3M" },
-      { section:"Gümüş", type:"Symbol Overview", symbol:"OANDA:XAGUSD", range:"3M" },
-      { section:"Gümüş", type:"Technical Analysis", symbol:"OANDA:XAGUSD" },
-      { section:"Gümüş", type:"Timeline News", symbol:"OANDA:XAGUSD" }
+      { section:"Gümüş", type:"Ticker", symbol:"TVC:SILVER" },
+      { section:"Gümüş", type:"Mini Symbol Overview", symbol:"TVC:SILVER", range:"3M" },
+      { section:"Gümüş", type:"Symbol Overview", symbol:"TVC:SILVER", range:"3M" },
+      { section:"Gümüş", type:"Technical Analysis", symbol:"TVC:SILVER" },
+      { section:"Gümüş", type:"Timeline News", symbol:"TVC:SILVER" }
     ]
   };
 }
@@ -3364,6 +3384,53 @@ function renderAIStatus(output, ctx, msg){
     </div>
     <div class="loading"><div class="spinner"></div>AI yanıtı bekleniyor…</div>`;
 }
+
+function getAIErrorHint(err){
+  const msg = String(err?.message || err || "Bilinmeyen hata");
+  if(/401|403|unauthorized|forbidden|invalid api/i.test(msg)) return "API key hatalı, iptal edilmiş veya bu modele yetkili değil.";
+  if(/429|rate|quota|limit/i.test(msg)) return "Kota veya rate limit dolmuş olabilir.";
+  if(/Failed to fetch|NetworkError|CORS|Load failed/i.test(msg)) return "Tarayıcıdan doğrudan API erişimi CORS/ağ engeline takılmış olabilir.";
+  if(/key kayıtlı değil/i.test(msg)) return "0G Router API key kaydedilmediği için yerel analiz kullanıldı.";
+  return "API yanıtı tamamlanamadı; aynı veri paketiyle yerel teknik analiz yedeği gösterildi.";
+}
+function renderAIMeta(ctx){
+  if(!ctx) return "";
+  const dq = ctx.data_quality || {};
+  const news = ctx.news || {};
+  const model = CONFIG.OG_MODEL || "—";
+  const source = escapeHtml(dq.price_source || "—");
+  return `<div class="ai-run-meta">
+    <div class="m">Model<b>${escapeHtml(model)}</b></div>
+    <div class="m">XAU geçmiş<b>${dq.xau_history_points ?? "—"}</b></div>
+    <div class="m">XAG geçmiş<b>${dq.xag_history_points ?? "—"}</b></div>
+    <div class="m">Haber başlığı<b>${(news.gold?.length || 0) + (news.silver?.length || 0)}</b></div>
+    <div class="m">Fiyat kaynağı<b>${source}</b></div>
+  </div>`;
+}
+function setAIRunStatus(mode, title, detail, ctx=null, err=null){
+  const box = document.getElementById("aiRunStatus");
+  if(!box) return;
+  const badgeMap = {
+    idle: "⏸️ Hazır",
+    preparing: "⏳ Hazırlanıyor",
+    streaming: "📡 0G’ye gönderildi",
+    ai: "✅ 0G AI aktif",
+    fallback: "⚠️ Yerel yedek",
+    error: "❌ API hatası"
+  };
+  box.className = `ai-run-status ai-status-${mode || "idle"}`;
+  const safeTitle = escapeHtml(title || "Durum bilinmiyor");
+  const safeDetail = escapeHtml(detail || "");
+  const errHtml = err ? `<div style="margin-top:8px;color:var(--muted);font-size:11px">Hata özeti: ${escapeHtml(String(err.message || err).slice(0,260))}<br>${escapeHtml(getAIErrorHint(err))}</div>` : "";
+  box.innerHTML = `
+    <div class="ai-run-top">
+      <span class="ai-run-badge">${badgeMap[mode] || badgeMap.idle}</span>
+      <span class="ai-run-title">${safeTitle}</span>
+    </div>
+    <div class="ai-run-detail">${safeDetail}</div>
+    ${errHtml}
+    ${renderAIMeta(ctx)}`;
+}
 async function call0GRouterAI(prompt, onToken){
   const apiKey = getOGApiKey();
   if(!apiKey) throw new Error("0G Router API key kayıtlı değil.");
@@ -3422,9 +3489,11 @@ async function runAIAnalysis(){
   if(btn)   btn.textContent = "⏳ Veriler hazırlanıyor…";
   if(panel) panel.style.display = "block";
   updateOGKeyStatus();
+  setAIRunStatus("preparing", "Veri paketi hazırlanıyor", "Fiyat, geçmiş veri, haber ve teknik göstergeler toplanıyor.");
   if(output)output.innerHTML = `<div class="loading"><div class="spinner"></div>Fiyat, geçmiş veri, haber ve teknik göstergeler hazırlanıyor…</div>`;
 
   if ((prices.xau && priceHistory.xau.length < 60) || (prices.xag && priceHistory.xag.length < 60)) {
+    setAIRunStatus("preparing", "Geçmiş veri tamamlanıyor", "Teknik AI analizinin çalışması için XAU ve XAG geçmiş mum verileri yenileniyor.");
     if (output) output.innerHTML = `<div class="loading"><div class="spinner"></div>Geçmiş veri tamamlanıyor…</div>`;
     await fetchFreeHistory();
   }
@@ -3442,25 +3511,30 @@ async function runAIAnalysis(){
 
   // Önce yerel analizi hemen göster; API başarısız olursa kullanıcı yine boş ekran görmez.
   const localText = generateLocalAnalysis(xauFc, xagFc, xauVade, xagVade, ratio);
-  renderAIOutput(output, localText, true);
+  setAIRunStatus("preparing", "Yerel ön analiz hazır", "0G AI yanıtı beklenirken aynı veriyle yerel teknik analiz yedeği hazırlandı. Nihai kaynak aşağıda güncellenecek.", ctx);
+  renderAIOutput(output, localText, true, ctx);
 
   try {
     if(btn) btn.textContent = "🤖 0G AI analiz ediyor…";
+    setAIRunStatus("streaming", "0G Router AI çalışıyor", "Veri paketi 0G Router API’ye gönderildi; minimax-m3 modelinden streaming yanıt bekleniyor.", ctx);
     renderAIStatus(output, ctx, "0G Router AI'ya gönderilen veri paketi hazırlandı. Streaming yanıt bekleniyor…");
     const prompt = buildAIPrompt(ctx);
     let lastRender = 0;
     const finalText = await call0GRouterAI(prompt, (full) => {
       const now = Date.now();
       if(now - lastRender > 220){
-        renderAIOutput(output, full + "▌", false);
+        renderAIOutput(output, full + "▌", false, ctx);
         lastRender = now;
       }
     });
-    if(finalText) renderAIOutput(output, finalText, false);
+    if(!finalText || !finalText.trim()) throw new Error("0G Router AI boş yanıt döndürdü.");
+    setAIRunStatus("ai", "Analiz 0G AI ile üretildi", "Bu öngörü 0G Router API üzerinden minimax-m3 modeliyle, aşağıdaki veri paketi kullanılarak oluşturuldu.", ctx);
+    renderAIOutput(output, finalText, false, ctx);
   } catch(e) {
     console.warn("0G AI API hata:", e.message);
     const warn = `⚠️ 0G AI API kullanılamadı\n${e.message}\n\nAşağıda aynı veri paketiyle üretilen yerel teknik analiz gösteriliyor. Tarayıcıda CORS engeli veya yanlış/eksik API key olabilir. API key'i kaydedip tekrar deneyin.`;
-    renderAIOutput(output, warn + "\n\n" + localText, true);
+    setAIRunStatus("fallback", "Yerel teknik analiz yedeği kullanıldı", getAIErrorHint(e), ctx, e);
+    renderAIOutput(output, warn + "\n\n" + localText, true, ctx, e);
   } finally {
     aiRunning = false;
     if(btn) btn.textContent = "🤖 AI Derin Analizi Yenile";
@@ -3473,9 +3547,12 @@ async function runAIAnalysis(){
 function escapeHtml(str){
   return String(str ?? "").replace(/[&<>"]/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[ch]));
 }
-function renderAIOutput(el,text,isLocal=false){
+function renderAIOutput(el,text,isLocal=false,ctx=null,err=null){
   if(!el)return;
-  const badge=isLocal?`<div style="display:inline-block;background:rgba(245,185,66,.12);color:var(--yellow);border:1px solid rgba(245,185,66,.3);border-radius:6px;padding:3px 10px;font-size:11px;font-weight:700;margin-bottom:14px">⚡ Yerel / Yedek Teknik Analiz</div>`:`<div style="display:inline-block;background:rgba(79,140,255,.12);color:var(--accent);border:1px solid rgba(79,140,255,.3);border-radius:6px;padding:3px 10px;font-size:11px;font-weight:700;margin-bottom:14px">🤖 0G Router AI Analizi</div>`;
+  const badge=isLocal
+    ? `<div style="display:inline-block;background:rgba(245,185,66,.12);color:var(--yellow);border:1px solid rgba(245,185,66,.3);border-radius:6px;padding:3px 10px;font-size:11px;font-weight:700;margin-bottom:10px">⚡ Analiz Kaynağı: Yerel Teknik Analiz Yedeği</div>`
+    : `<div style="display:inline-block;background:rgba(46,204,113,.12);color:var(--green);border:1px solid rgba(46,204,113,.3);border-radius:6px;padding:3px 10px;font-size:11px;font-weight:700;margin-bottom:10px">🤖 Analiz Kaynağı: 0G AI / ${escapeHtml(CONFIG.OG_MODEL || "model")}</div>`;
+  const metaLine = ctx ? `<div style="font-size:11px;color:var(--muted);margin-bottom:12px">Kullanılan veri: XAU geçmiş ${ctx.data_quality?.xau_history_points ?? "—"}, XAG geçmiş ${ctx.data_quality?.xag_history_points ?? "—"}, haber başlığı ${(ctx.news?.gold?.length || 0) + (ctx.news?.silver?.length || 0)}, fiyat kaynağı ${escapeHtml(ctx.data_quality?.price_source || "—")}${err ? ` · API hata: ${escapeHtml(String(err.message || err).slice(0,120))}` : ""}</div>` : "";
   const raw = String(text || "");
   const html=raw.split("\n").map(line=>{
     const clean = escapeHtml(line.trimEnd());
@@ -3484,7 +3561,7 @@ function renderAIOutput(el,text,isLocal=false){
     if(/^[-•]/.test(clean))return`<div style="padding:3px 0 3px 14px;border-left:2px solid var(--border-2);margin:3px 0;color:var(--muted);font-size:13px">${clean.slice(1).trim()}</div>`;
     return`<div style="color:var(--muted);font-size:13px;margin-bottom:4px;line-height:1.6">${clean}</div>`;
   }).filter(Boolean).join("");
-  el.innerHTML=badge+(html||`<div style="color:var(--muted)">${escapeHtml(raw)}</div>`);
+  el.innerHTML=badge+metaLine+(html||`<div style="color:var(--muted)">${escapeHtml(raw)}</div>`);
 }
 
 function generateLocalAnalysis(xauFc, xagFc, xauVade, xagVade, ratio) {
