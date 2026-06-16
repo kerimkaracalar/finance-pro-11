@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Finans Pro · Altın & Gümüş Analiz Merkezi</title>
+<title>Finans Pro · Altın & Gümüş AI Analiz Merkezi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -363,6 +363,12 @@ header {
 @keyframes spin { to { transform: rotate(360deg); } }
 .disclaimer { font-size: 12px; color: var(--muted); background: var(--panel-2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-top: 8px; }
 footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border); }
+.ai-stream-note { color: var(--muted); font-size: 12px; margin-bottom: 10px; }
+.ai-source-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:12px; }
+.ai-source-pill { background:var(--panel-2); border:1px solid var(--border); border-radius:8px; padding:8px 10px; font-size:11px; color:var(--muted); }
+.ai-source-pill b { color:var(--text); font-family:'DM Mono',monospace; }
+@media(max-width:720px){ .ai-source-grid { grid-template-columns:repeat(2,1fr); } }
+
 
 /* === ÖNGÖRÜ === */
 .forecast-hero {
@@ -510,7 +516,7 @@ footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 3
         {"proName":"OANDA:XAUUSD","title":"Gold"},
         {"proName":"OANDA:XAGUSD","title":"Silver"},
         {"proName":"FX_IDC:USDTRY","title":"USD/TRY"},
-        {"proName":"TVC:SILVER","title":"Silver Spot"},
+        {"proName":"OANDA:XAGUSD","title":"Silver Spot"},
         {"proName":"TVC:GOLD","title":"Gold Spot"},
         {"proName":"SP:SPX","title":"S&P 500"}
       ],
@@ -814,7 +820,7 @@ footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 3
           <div class="tradingview-widget-container__widget" style="height:100%"></div>
           <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
           {
-            "symbol": "TVC:SILVER",
+            "symbol": "OANDA:XAGUSD",
             "width": "100%",
             "height": 220,
             "locale": "tr",
@@ -836,7 +842,7 @@ footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 3
           <div class="tradingview-widget-container__widget" style="height:100%"></div>
           <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-symbol-overview.js" async>
           {
-            "symbols": [["TVC:SILVER|3M"]],
+            "symbols": [["OANDA:XAGUSD|3M"]],
             "chartOnly": false,
             "width": "100%",
             "height": 220,
@@ -877,14 +883,14 @@ footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 3
         <div class="tv-ta-title" style="color:var(--silver-l)">⚙️ Teknik Analiz Özeti · XAG/USD</div>
         <div class="tradingview-widget-container" style="height:420px;width:100%">
           <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
-          <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/TVC-SILVER/technicals/" rel="noopener nofollow" target="_blank"><span class="blue-text">SILVER technical analysis</span></a><span> by TradingView</span></div>
+          <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/OANDA-XAGUSD/technicals/" rel="noopener nofollow" target="_blank"><span class="blue-text">XAGUSD technical analysis</span></a><span> by TradingView</span></div>
           <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>
           {
             "interval": "1D",
             "width": "100%",
             "isTransparent": true,
             "height": 420,
-            "symbol": "TVC:SILVER",
+            "symbol": "OANDA:XAGUSD",
             "showIntervalTabs": true,
             "displayMode": "multiple",
             "locale": "tr",
@@ -897,14 +903,14 @@ footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 3
         <div class="tv-ta-title" style="color:var(--silver-l)">📌 Tek Gösterge · XAG/USD</div>
         <div class="tradingview-widget-container" style="height:420px;width:100%">
           <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
-          <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/TVC-SILVER/technicals/" rel="noopener nofollow" target="_blank"><span class="blue-text">SILVER rating</span></a><span> by TradingView</span></div>
+          <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/OANDA-XAGUSD/technicals/" rel="noopener nofollow" target="_blank"><span class="blue-text">XAGUSD rating</span></a><span> by TradingView</span></div>
           <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>
           {
             "interval": "1h",
             "width": "100%",
             "isTransparent": true,
             "height": 420,
-            "symbol": "TVC:SILVER",
+            "symbol": "OANDA:XAGUSD",
             "showIntervalTabs": true,
             "displayMode": "single",
             "locale": "tr",
@@ -920,11 +926,11 @@ footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 3
       <div style="padding:14px 18px 10px;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--silver-l);font-weight:700">📰 Güncel Gümüş Haberleri · TradingView</div>
       <div class="tradingview-widget-container" style="height:420px">
         <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
-        <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/TVC-SILVER/" rel="noopener nofollow" target="_blank"><span class="blue-text">SILVER haberleri</span></a><span> by TradingView</span></div>
+        <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/OANDA-XAGUSD/" rel="noopener nofollow" target="_blank"><span class="blue-text">XAGUSD haberleri</span></a><span> by TradingView</span></div>
         <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-timeline.js" async>
         {
           "feedMode": "symbol",
-          "symbol": "TVC:SILVER",
+          "symbol": "OANDA:XAGUSD",
           "isTransparent": true,
           "displayMode": "adaptive",
           "width": "100%",
@@ -962,7 +968,13 @@ footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 3
       </div>
     </div>
     <div class="ai-panel" id="aiPanel" style="display:none">
-      <div class="ai-panel-header"><span>🤖 Claude AI Piyasa Yorumu</span><span class="ai-ts" id="aiTimestamp"></span></div>
+      <div class="ai-panel-header"><span>🤖 0G Router AI Piyasa Yorumu</span><span class="ai-ts" id="aiTimestamp"></span></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--panel-2)">
+        <input id="ogApiKeyInput" type="password" placeholder="0G Router API key — yalnızca bu tarayıcıda saklanır" style="flex:1;min-width:260px;background:var(--panel);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:9px;font-family:'DM Mono',monospace;font-size:12px;outline:none" />
+        <button onclick="saveOGApiKey()" style="background:var(--panel-3);border:1px solid var(--border-2);color:var(--text);padding:9px 14px;border-radius:9px;font-weight:700;cursor:pointer">Kaydet</button>
+        <button onclick="clearOGApiKey()" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:9px 12px;border-radius:9px;cursor:pointer">Sil</button>
+        <span id="ogKeyStatus" style="font-size:11px;color:var(--muted)">API key durumu kontrol ediliyor…</span>
+      </div>
       <div id="aiOutput" class="ai-output"></div>
     </div>
     <div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap">
@@ -1101,7 +1113,7 @@ footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 3
           <div style="padding:14px 18px 10px;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--silver-l);font-weight:700">🥈 Teknik Analiz · XAG/USD</div>
           <div class="tradingview-widget-container">
             <div class="tradingview-widget-container__widget"></div>
-            <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/SILVER/?exchange=TVC" rel="noopener nofollow" target="_blank"><span class="blue-text">SILVER analiz</span></a> by TradingView</div>
+            <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/XAGUSD/?exchange=OANDA" rel="noopener nofollow" target="_blank"><span class="blue-text">XAGUSD analiz</span></a> by TradingView</div>
             <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>
             {
               "colorTheme": "dark",
@@ -1112,7 +1124,7 @@ footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 3
               "disableInterval": false,
               "width": "100%",
               "height": 450,
-              "symbol": "TVC:SILVER",
+              "symbol": "OANDA:XAGUSD",
               "showIntervalTabs": true
             }
             </script>
@@ -1329,6 +1341,10 @@ const CONFIG = {
     "goldapi-5d24e584726db9e351f90ded6cc46581-io"  // Yedek key
   ],
   GOLDAPI_KEY:  "goldapi-42p3xsmnmvy8et-io",  // goldapi.io (birincil metal fiyat kaynağı)
+
+  // 0G Router AI — API key HTML içine gömülmez, localStorage içinde saklanır
+  OG_API_URL:   "https://router-api.0g.ai/v1/chat/completions",
+  OG_MODEL:     "minimax-m3",
 
   THRESHOLDS: {
     pe:          { dir: "down", t: [15, 25, 40, 60]  },
@@ -2617,6 +2633,7 @@ function setText(id, val) {
 }
 
 // ── HABERLER ─────────────────────────────────────
+let lastMetalNews = { gold: [], silver: [] };
 async function loadMetalNews() {
   renderMetalNews("goldNewsCard",   "Son Altın Haberleri",  null, true);
   renderMetalNews("silverNewsCard", "Son Gümüş Haberleri",  null, true);
@@ -2696,6 +2713,8 @@ async function loadMetalNews() {
     } catch(e) { console.warn("RSS silver yedek hata:", e.message); }
   }
 
+  lastMetalNews.gold = goldNews || [];
+  lastMetalNews.silver = silvNews || [];
   renderMetalNews("goldNewsCard",   "Son Altın Haberleri",  goldNews);
   renderMetalNews("silverNewsCard", "Son Gümüş Haberleri",  silvNews);
 }
@@ -3189,6 +3208,210 @@ if(typeof Notification!=="undefined"&&Notification.permission==="default")Notifi
 
 // ── AI Analiz ─────────────────────────────────────────────────
 let aiRunning=false;
+
+function getOGApiKey(){
+  return localStorage.getItem("og_router_key") || "";
+}
+function maskKey(k){
+  return k ? `${k.slice(0,6)}…${k.slice(-4)}` : "";
+}
+function updateOGKeyStatus(){
+  const input = document.getElementById("ogApiKeyInput");
+  const status = document.getElementById("ogKeyStatus");
+  const k = getOGApiKey();
+  if(input && !input.value) input.value = k;
+  if(status) status.innerHTML = k ? `✅ Key kayıtlı: <b style="color:var(--text)">${maskKey(k)}</b>` : "⚠️ Key kayıtlı değil — AI analizi için kaydedin";
+}
+function saveOGApiKey(){
+  const input = document.getElementById("ogApiKeyInput");
+  const k = (input?.value || "").trim();
+  if(!k){ alert("Lütfen 0G Router API key girin."); return; }
+  localStorage.setItem("og_router_key", k);
+  updateOGKeyStatus();
+}
+function clearOGApiKey(){
+  localStorage.removeItem("og_router_key");
+  const input = document.getElementById("ogApiKeyInput");
+  if(input) input.value = "";
+  updateOGKeyStatus();
+}
+setTimeout(updateOGKeyStatus, 300);
+
+function pctChangeFromHistory(arr, days){
+  if(!arr || arr.length < 2) return null;
+  const cur = arr[arr.length-1];
+  const idx = Math.max(0, arr.length-1-days);
+  const old = arr[idx];
+  if(!old) return null;
+  return ((cur-old)/old)*100;
+}
+function safeFixed(v,d=2){ return Number.isFinite(v) ? Number(v).toFixed(d) : "—"; }
+function buildIndicatorSnapshot(pfx, fc){
+  const arr = priceHistory[pfx] || [];
+  const last = arr[arr.length-1] || (pfx==="xau" ? prices.xau : prices.xag);
+  return {
+    symbol: pfx === "xau" ? "XAU/USD" : "XAG/USD",
+    price: last,
+    history_points: arr.length,
+    returns: {
+      approx_5d: pctChangeFromHistory(arr, 5),
+      approx_20d: pctChangeFromHistory(arr, 20),
+      approx_60d: pctChangeFromHistory(arr, 60),
+      approx_120d: pctChangeFromHistory(arr, 120)
+    },
+    technicals: fc ? {
+      score: fc.forecastScore, verdict: fc.verdict, bull: fc.bull, bear: fc.bear,
+      rsi14: fc.rsi, ema9: fc.ema9, ema21: fc.ema21, sma20: fc.sma20, sma50: fc.sma50, sma200: fc.sma200,
+      macd: fc.macdD, bollinger: fc.boll, stochastic: fc.stoch, atr14: fc.atr,
+      pivot: fc.pivot, support1: fc.s1, support2: fc.s2, resistance1: fc.r1, resistance2: fc.r2,
+      signals: fc.signals || []
+    } : null
+  };
+}
+function summarizeNewsForAI(){
+  const mapNews = (arr) => (arr || []).slice(0, 8).map(n => ({
+    title: n.headline || n.title || "",
+    source: n.source || "",
+    date: n.datetime ? new Date(n.datetime*1000).toISOString().slice(0,16) : "",
+    url: n.url || ""
+  })).filter(n => n.title);
+  // Eğer API haber listesi daha önce dolmadıysa DOM üzerindeki görünen haberlerden de oku.
+  const domNews = (cardId) => Array.from(document.querySelectorAll(`#${cardId} .news-title`)).slice(0,8).map(el => ({ title: el.textContent.trim(), source: "Sayfa/Dom", date: "", url: "" }));
+  return {
+    gold: mapNews(lastMetalNews.gold).length ? mapNews(lastMetalNews.gold) : domNews("goldNewsCard"),
+    silver: mapNews(lastMetalNews.silver).length ? mapNews(lastMetalNews.silver) : domNews("silverNewsCard")
+  };
+}
+function getTradingViewWidgetContext(){
+  return {
+    readable_note: "TradingView iframe/widget içerikleri tarayıcı güvenliği nedeniyle JavaScript tarafından okunamaz. Bu nedenle modele widget sembol/zaman aralığı bilgileri ve uygulamanın kendi teknik göstergeleri gönderilir.",
+    widgets: [
+      { section:"Altın", type:"Ticker", symbol:"OANDA:XAUUSD" },
+      { section:"Altın", type:"Mini Symbol Overview", symbol:"OANDA:XAUUSD", range:"3M" },
+      { section:"Altın", type:"Symbol Overview", symbol:"OANDA:XAUUSD", range:"3M" },
+      { section:"Altın", type:"Technical Analysis", symbol:"OANDA:XAUUSD" },
+      { section:"Altın", type:"Timeline News", symbol:"OANDA:XAUUSD" },
+      { section:"Gümüş", type:"Ticker", symbol:"OANDA:XAGUSD" },
+      { section:"Gümüş", type:"Mini Symbol Overview", symbol:"OANDA:XAGUSD", range:"3M" },
+      { section:"Gümüş", type:"Symbol Overview", symbol:"OANDA:XAGUSD", range:"3M" },
+      { section:"Gümüş", type:"Technical Analysis", symbol:"OANDA:XAGUSD" },
+      { section:"Gümüş", type:"Timeline News", symbol:"OANDA:XAGUSD" }
+    ]
+  };
+}
+function collectAIContext(xauFc, xagFc, xauVade, xagVade, ratio){
+  return {
+    timestamp: new Date().toLocaleString("tr-TR"),
+    data_quality: {
+      xau_history_points: priceHistory.xau.length,
+      xag_history_points: priceHistory.xag.length,
+      xau_has_min_60: priceHistory.xau.length >= 60,
+      xag_has_min_60: priceHistory.xag.length >= 60,
+      price_source: document.getElementById("price-source-badge")?.textContent?.trim() || "",
+      data_note: document.getElementById("data-source-note")?.textContent?.trim() || ""
+    },
+    market: {
+      xauusd: prices.xau, xagusd: prices.xag, usdtry: prices.usdtry, eurusd: prices.eurusd,
+      gold_silver_ratio: ratio
+    },
+    instruments: {
+      gold: buildIndicatorSnapshot("xau", xauFc),
+      silver: buildIndicatorSnapshot("xag", xagFc)
+    },
+    forecasts: { gold: xauVade, silver: xagVade },
+    news: summarizeNewsForAI(),
+    site_context: {
+      silver_market_notes: ["Endüstriyel talep yaklaşık %60", "Yatırım talebi yaklaşık %25", "Mücevher ve gümüşçülük yaklaşık %15"],
+      ratio_interpretation: ">80 gümüş görece ucuz, <50 altın görece ucuz, tarihsel ortalama yaklaşık 65"
+    },
+    tradingview_context: getTradingViewWidgetContext()
+  };
+}
+function buildAIPrompt(ctx){
+  return `Sen kıdemli bir kıymetli metal stratejisti ve teknik analiz uzmanısın. Aşağıdaki JSON veri paketini kullanarak Türkçe, net ve ölçülü bir altın/gümüş piyasa öngörüsü hazırla.
+
+ÖNEMLİ KURALLAR:
+- Yalnızca verilen veri paketine dayan. Veri eksikse açıkça "veri kalitesi sınırlı" de.
+- TradingView widget iframe içerikleri doğrudan okunamadığı için widget içeriğini gördüğünü iddia etme; sadece verilen sembol ve yerel teknik göstergeleri kullan.
+- Haber başlıklarını kesin bilgi gibi değil, piyasa algısını etkileyen başlıklar olarak yorumla.
+- Yatırım tavsiyesi dili kullanma. "Kesin al/sat" yerine "teknik eğilim", "izlenecek bölge", "risk/ödül" de.
+- Somut seviyeler ver: destek, direnç, hedef aralık, invalidasyon/stop bölgesi.
+- Kısa vade 1-2 hafta, orta vade 1-3 ay, uzun vade 3-12 ay.
+
+ÇIKTI FORMATIN:
+🔍 GENEL DURUM
+🥇 ALTIN KISA VADE
+🥇 ALTIN ORTA/UZUN VADE
+🥈 GÜMÜŞ KISA VADE
+🥈 GÜMÜŞ ORTA/UZUN VADE
+⚖️ ALTIN/GÜMÜŞ ORANI
+📰 HABER AKIŞI ETKİSİ
+🎯 TAKİP EDİLECEK SEVİYELER
+⚠️ RİSKLER VE GEÇERSİZLEŞME
+
+VERİ PAKETİ:
+${JSON.stringify(ctx, null, 2)}`;
+}
+function renderAIStatus(output, ctx, msg){
+  if(!output) return;
+  output.innerHTML = `
+    <div class="ai-stream-note">${msg}</div>
+    <div class="ai-source-grid">
+      <div class="ai-source-pill">XAU geçmiş: <b>${ctx?.data_quality?.xau_history_points ?? "—"}</b></div>
+      <div class="ai-source-pill">XAG geçmiş: <b>${ctx?.data_quality?.xag_history_points ?? "—"}</b></div>
+      <div class="ai-source-pill">Altın haber: <b>${ctx?.news?.gold?.length ?? 0}</b></div>
+      <div class="ai-source-pill">Gümüş haber: <b>${ctx?.news?.silver?.length ?? 0}</b></div>
+    </div>
+    <div class="loading"><div class="spinner"></div>AI yanıtı bekleniyor…</div>`;
+}
+async function call0GRouterAI(prompt, onToken){
+  const apiKey = getOGApiKey();
+  if(!apiKey) throw new Error("0G Router API key kayıtlı değil.");
+  const res = await fetch(CONFIG.OG_API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
+    body: JSON.stringify({
+      model: CONFIG.OG_MODEL,
+      messages: [
+        { role: "system", content: "Sen profesyonel fakat temkinli bir finansal piyasa analiz asistanısın. Türkçe yanıt verirsin. Yatırım tavsiyesi vermezsin; senaryo ve risk dili kullanırsın." },
+        { role: "user", content: prompt }
+      ],
+      stream: true
+    })
+  });
+  if(!res.ok){
+    let errText = "";
+    try { errText = await res.text(); } catch(_) {}
+    throw new Error(`0G Router API ${res.status}: ${errText.slice(0,180)}`);
+  }
+  if(!res.body){
+    const data = await res.json();
+    return data.choices?.[0]?.message?.content || data.content?.[0]?.text || "";
+  }
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder("utf-8");
+  let full = "", buffer = "";
+  while(true){
+    const { value, done } = await reader.read();
+    if(done) break;
+    buffer += decoder.decode(value, { stream:true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() || "";
+    for(const raw of lines){
+      const line = raw.trim();
+      if(!line || !line.startsWith("data:")) continue;
+      const payload = line.replace(/^data:\s*/, "");
+      if(payload === "[DONE]") return full;
+      try{
+        const json = JSON.parse(payload);
+        const token = json.choices?.[0]?.delta?.content || json.choices?.[0]?.message?.content || json.content?.[0]?.text || "";
+        if(token){ full += token; if(onToken) onToken(full, token); }
+      }catch(_){ /* SSE keep-alive veya parçalı veri */ }
+    }
+  }
+  return full;
+}
+
 async function runAIAnalysis(){
   if(aiRunning) return;
   if(!prices.xau && !prices.xag){ alert("Fiyat verilerinin yüklenmesini bekleyin."); return; }
@@ -3196,90 +3419,72 @@ async function runAIAnalysis(){
   const btn   = document.getElementById("aiAnalyzeBtnTxt");
   const panel = document.getElementById("aiPanel");
   const output= document.getElementById("aiOutput");
-  if(btn)   btn.textContent = "⏳ Analiz yapılıyor…";
+  if(btn)   btn.textContent = "⏳ Veriler hazırlanıyor…";
   if(panel) panel.style.display = "block";
-  if(output)output.innerHTML = `<div class="loading"><div class="spinner"></div>Veriler işleniyor…</div>`;
+  updateOGKeyStatus();
+  if(output)output.innerHTML = `<div class="loading"><div class="spinner"></div>Fiyat, geçmiş veri, haber ve teknik göstergeler hazırlanıyor…</div>`;
 
   if ((prices.xau && priceHistory.xau.length < 60) || (prices.xag && priceHistory.xag.length < 60)) {
     if (output) output.innerHTML = `<div class="loading"><div class="spinner"></div>Geçmiş veri tamamlanıyor…</div>`;
     await fetchFreeHistory();
   }
+  // Haber akışı daha önce dolmadıysa modeli beslemeden önce tekrar dene.
+  if ((!lastMetalNews.gold?.length && !lastMetalNews.silver?.length)) {
+    try { await loadMetalNews(); } catch(e) { console.warn("AI öncesi haber yenileme hata:", e.message); }
+  }
 
   const xauFc   = prices.xau ? buildForecast("xau", prices.xau, null) : null;
   const xagFc   = prices.xag ? buildForecast("xag", prices.xag, null) : null;
-  const ratio   = (prices.xau && prices.xag) ? (prices.xau / prices.xag).toFixed(1) : "N/A";
+  const ratio   = (prices.xau && prices.xag) ? Number(prices.xau / prices.xag).toFixed(1) : "N/A";
   const xauVade = xauFc && prices.xau ? buildVadeForecasts("xau", prices.xau, xauFc.atr, xauFc, null) : null;
   const xagVade = xagFc && prices.xag ? buildVadeForecasts("xag", prices.xag, xagFc.atr, xagFc, null) : null;
+  const ctx = collectAIContext(xauFc, xagFc, xauVade, xagVade, ratio);
 
-  // Önce yerel analizi hemen göster
+  // Önce yerel analizi hemen göster; API başarısız olursa kullanıcı yine boş ekran görmez.
   const localText = generateLocalAnalysis(xauFc, xagFc, xauVade, xagVade, ratio);
   renderAIOutput(output, localText, true);
 
-  // Sonra API'ye gönder — başarılıysa üzerine yaz
   try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 2000,
-        messages: [{
-          role: "user",
-          content: `Sen kıdemli bir kıymetli metal ve emtia analistisin. Aşağıdaki gerçek zamanlı piyasa verilerini kullanarak kapsamlı, aksiyon odaklı bir analiz yap.
-
-📊 GÜNCEL VERİLER (${new Date().toLocaleString("tr-TR")}):
-- ALTIN (XAU/USD): $${prices.xau?.toFixed(2)||"N/A"}
-  RSI-14: ${xauFc?.rsi?.toFixed(1)||"—"} | EMA-9: ${xauFc?.ema9?.toFixed(0)||"—"} | SMA-20: ${xauFc?.sma20?.toFixed(0)||"—"} | SMA-50: ${xauFc?.sma50?.toFixed(0)||"—"} | SMA-200: ${xauFc?.sma200?.toFixed(0)||"—"}
-  MACD: ${xauFc?.macdD?.macd?.toFixed(2)||"—"} | Bollinger Orta: ${xauFc?.boll?.middle?.toFixed(0)||"—"} | Stokastik: ${xauFc?.stoch?.toFixed(1)||"—"}
-  ATR-14: ${xauFc?.atr?.toFixed(2)||"—"} | Teknik Skor: ${xauFc?.forecastScore||"—"}/100 (${(xauFc?.bull||0)} boğa, ${(xauFc?.bear||0)} ayı sinyali)
-  
-- GÜMÜŞ (XAG/USD): $${prices.xag?.toFixed(3)||"N/A"}
-  RSI-14: ${xagFc?.rsi?.toFixed(1)||"—"} | SMA-20: ${xagFc?.sma20?.toFixed(3)||"—"} | SMA-50: ${xagFc?.sma50?.toFixed(3)||"—"}
-  Teknik Skor: ${xagFc?.forecastScore||"—"}/100
-
-- Au/Ag Oranı: ${ratio} (tarihsel ort: ~65, >80 gümüş ucuz, <50 altın ucuz)
-- USD/TRY: ${prices.usdtry?.toFixed(2)||"—"}
-
-Lütfen Türkçe olarak aşağıdaki başlıklarda, somut fiyat seviyeleri ve net yön belirterek analiz yaz:
-
-🔍 GENEL DURUM — Piyasanın şu anki konumu ve öne çıkan teknik görünüm
-🥇 ALTIN — Kısa Vade (1-2 Hafta) — net yön (AL/SAT/TUT), hedef: $X–$Y, stop: $Z
-🥇 ALTIN — Orta Vade (1-3 Ay) — senaryo ve olasılık dağılımı, kritik seviyeler
-🥇 ALTIN — Uzun Vade (3-12 Ay) — yapısal görünüm, makro faktörler
-🥈 GÜMÜŞ — Kısa Vade (1-2 Hafta) — net yön, hedef seviyeleri
-🥈 GÜMÜŞ — Orta/Uzun Vade — trend ve yapısal faktörler
-⚖️ Au/Ag ORAN YORUMU — Mevcut oranın tarihsel bağlamda anlamı ve rotasyon stratejisi
-⚠️ TEMEL RİSKLER — Fed politikası, DXY, jeopolitik, likidite riskleri
-
-Her bölümü 3-5 cümleyle kısa ama aksiyon odaklı tut. Belirsiz ifadelerden kaçın, net sayılar ver.`
-        }]
-      })
+    if(btn) btn.textContent = "🤖 0G AI analiz ediyor…";
+    renderAIStatus(output, ctx, "0G Router AI'ya gönderilen veri paketi hazırlandı. Streaming yanıt bekleniyor…");
+    const prompt = buildAIPrompt(ctx);
+    let lastRender = 0;
+    const finalText = await call0GRouterAI(prompt, (full) => {
+      const now = Date.now();
+      if(now - lastRender > 220){
+        renderAIOutput(output, full + "▌", false);
+        lastRender = now;
+      }
     });
-    if (!res.ok) throw new Error("API " + res.status);
-    const data = await res.json();
-    const text = data.content?.[0]?.text;
-    if (text) renderAIOutput(output, text, false);
+    if(finalText) renderAIOutput(output, finalText, false);
   } catch(e) {
-    console.warn("AI API hata:", e.message);
-    // Yerel analiz zaten gösterildi, üzerine yazma
+    console.warn("0G AI API hata:", e.message);
+    const warn = `⚠️ 0G AI API kullanılamadı\n${e.message}\n\nAşağıda aynı veri paketiyle üretilen yerel teknik analiz gösteriliyor. Tarayıcıda CORS engeli veya yanlış/eksik API key olabilir. API key'i kaydedip tekrar deneyin.`;
+    renderAIOutput(output, warn + "\n\n" + localText, true);
   } finally {
     aiRunning = false;
-    if(btn) btn.textContent = "🤖 Yenile";
+    if(btn) btn.textContent = "🤖 AI Derin Analizi Yenile";
     const ts = document.getElementById("aiTimestamp");
     if(ts) ts.textContent = new Date().toLocaleTimeString("tr-TR");
+    updateOGKeyStatus();
   }
 }
 
+function escapeHtml(str){
+  return String(str ?? "").replace(/[&<>"]/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[ch]));
+}
 function renderAIOutput(el,text,isLocal=false){
   if(!el)return;
-  const badge=isLocal?`<div style="display:inline-block;background:rgba(245,185,66,.12);color:var(--yellow);border:1px solid rgba(245,185,66,.3);border-radius:6px;padding:3px 10px;font-size:11px;font-weight:700;margin-bottom:14px">⚡ Yerel Teknik Analiz</div>`:"";
-  const html=text.split("\n").map(line=>{
-    if(!line.trim())return"";
-    if(/^[🔍🥇🥈⚖️🎯⚠️📅📆🗓️]/.test(line))return`<div style="margin-top:16px;margin-bottom:6px;font-weight:700;font-size:15px;color:var(--text);border-bottom:1px solid var(--border);padding-bottom:6px">${line}</div>`;
-    if(/^[-•]/.test(line))return`<div style="padding:3px 0 3px 14px;border-left:2px solid var(--border-2);margin:3px 0;color:var(--muted);font-size:13px">${line.slice(1).trim()}</div>`;
-    return`<div style="color:var(--muted);font-size:13px;margin-bottom:4px;line-height:1.6">${line}</div>`;
+  const badge=isLocal?`<div style="display:inline-block;background:rgba(245,185,66,.12);color:var(--yellow);border:1px solid rgba(245,185,66,.3);border-radius:6px;padding:3px 10px;font-size:11px;font-weight:700;margin-bottom:14px">⚡ Yerel / Yedek Teknik Analiz</div>`:`<div style="display:inline-block;background:rgba(79,140,255,.12);color:var(--accent);border:1px solid rgba(79,140,255,.3);border-radius:6px;padding:3px 10px;font-size:11px;font-weight:700;margin-bottom:14px">🤖 0G Router AI Analizi</div>`;
+  const raw = String(text || "");
+  const html=raw.split("\n").map(line=>{
+    const clean = escapeHtml(line.trimEnd());
+    if(!clean.trim())return"";
+    if(/^[🔍🥇🥈⚖️🎯⚠️📅📆🗓️📰]/.test(clean))return`<div style="margin-top:16px;margin-bottom:6px;font-weight:700;font-size:15px;color:var(--text);border-bottom:1px solid var(--border);padding-bottom:6px">${clean}</div>`;
+    if(/^[-•]/.test(clean))return`<div style="padding:3px 0 3px 14px;border-left:2px solid var(--border-2);margin:3px 0;color:var(--muted);font-size:13px">${clean.slice(1).trim()}</div>`;
+    return`<div style="color:var(--muted);font-size:13px;margin-bottom:4px;line-height:1.6">${clean}</div>`;
   }).filter(Boolean).join("");
-  el.innerHTML=badge+(html||`<div style="color:var(--muted)">${text}</div>`);
+  el.innerHTML=badge+(html||`<div style="color:var(--muted)">${escapeHtml(raw)}</div>`);
 }
 
 function generateLocalAnalysis(xauFc, xagFc, xauVade, xagVade, ratio) {
