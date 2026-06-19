@@ -1,10 +1,7 @@
 {
-  "name": "finans-pro-ai-proxy",
-  "version": "1.0.0",
+  "name": "finans-pro-gemini-proxy",
+  "version": "29.0.0",
   "private": true,
-  "scripts": {
-    "dev": "vercel dev"
-  },
   "engines": {
     "node": ">=18"
   }

@@ -1,21 +1,25 @@
-# Finans Pro v28 — 0G AI Proxy Ready
+# Finans Pro v29 — Gemini AI Proxy
 
-Bu sürüm `Failed to fetch` / CORS problemini çözmek için `/api/ai` proxy endpoint'i ile birlikte gelir.
+Bu sürüm 0G Router yerine Google Gemini API kullanır.
 
-## Kurulum — Vercel
+## Vercel kurulumu
 
-1. Bu klasörü GitHub'a yükleyin veya Vercel'e import edin.
-2. Vercel Project Settings > Environment Variables bölümüne şunu ekleyin:
-   - Name: `OG_API_KEY`
-   - Value: 0G Router API key'iniz
-3. Deploy edin.
-4. Site açılınca Öngörüler bölümünde Proxy URL alanına `/api/ai` yazıp **Proxy Kaydet** deyin.
-5. AI Derin Analiz'e basın. Rozette `✅ 0G AI aktif` görmelisiniz.
+1. Dosyaları repo root dizinine ekleyin.
+2. Vercel > Project Settings > Environment Variables alanına ekleyin:
 
-## Neden proxy gerekiyor?
+```txt
+GEMINI_API_KEY=AI Studio'dan aldığınız Gemini API key
+```
 
-Tarayıcıdan doğrudan `https://router-api.0g.ai/v1/chat/completions` adresine istek atmak CORS nedeniyle `Failed to fetch` verebilir. Proxy bu isteği sunucu tarafından yaptığı için CORS ve API key görünürlüğü sorununu çözer.
+İsteğe bağlı model değişkeni:
 
-## Güvenlik
+```txt
+GEMINI_MODEL=gemini-2.5-flash
+```
 
-API key HTML içine yazılmamalıdır. Bu sürüm key'i Vercel environment variable olarak sunucuda kullanır.
+3. Redeploy yapın.
+4. Panelde Öngörüler bölümünde Proxy URL alanına `/api/ai` yazıp kaydedin.
+
+## Önemli
+
+API key'i HTML içine yazmayın. Paylaşılan key'i AI Studio'da rotate etmeniz önerilir.
