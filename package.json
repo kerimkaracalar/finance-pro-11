@@ -1,8 +1,0 @@
-{
-  "name": "finans-pro-gemini-proxy",
-  "version": "29.0.0",
-  "private": true,
-  "engines": {
-    "node": ">=18"
-  }
-}
